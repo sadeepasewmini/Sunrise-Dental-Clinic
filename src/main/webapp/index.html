@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunrise Dental Clinic - Appointment & Patient Management System</title>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- ========================================== -->
+    <!-- 1. LOGIN SCREEN -->
+    <!-- ========================================== -->
+    <div id="login-screen" class="login-container">
+        <div class="login-card glass">
+            <h1 class="login-logo"><i class="fa-solid fa-tooth"></i> Sunrise Dental</h1>
+            <p class="login-subtitle">Clinic Appointment & Billing System</p>
+            
+            <div id="login-alert" class="alert alert-danger"></div>
+            
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label" for="login-username">Username</label>
+                    <input type="text" id="login-username" class="form-input" placeholder="Enter your username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login Securely
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. MAIN SYSTEM DASHBOARD -->
+    <!-- ========================================== -->
+    <div id="app-screen" class="app-container" style="display: none;">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-tooth"></i> Sunrise Dental
+            </div>
+            
+            <nav style="flex-grow: 1;">
+                <ul class="sidebar-menu">
+                    <li>
+                        <div class="menu-item active" onclick="switchSection('dashboard')">
+                            <i class="fa-solid fa-chart-line"></i> Dashboard
+                        </div>
+                    </li>
+                    <li>
+                        <div class="menu-item" onclick="switchSection('register')">
+                            <i class="fa-solid fa-calendar-plus"></i> Register Appointment
+                        </div>
+                    </li>
+                    <li>
+                        <div class="menu-item" onclick="switchSection('search')">
+                            <i class="fa-solid fa-magnifying-glass"></i> Search Appointment
+                        </div>
+                    </li>
+                    <li>
+                        <div class="menu-item" onclick="switchSection('billing')">
+                            <i class="fa-solid fa-file-invoice-dollar"></i> Calculate & Bill
+                        </div>
+                    </li>
+                    <li>
+                        <div class="menu-item" onclick="switchSection('notifications')">
+                            <i class="fa-solid fa-bell"></i> Alerts & Logs
+                        </div>
+                    </li>
+                    <li>
+                        <div class="menu-item" onclick="switchSection('help')">
+                            <i class="fa-solid fa-circle-question"></i> Help & Guides
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- User Info & Logout -->
+            <div class="user-profile-widget">
+                <div class="user-avatar" id="nav-avatar">U</div>
+                <div class="user-info" style="flex-grow: 1;">
+                    <div class="user-name" id="nav-username">Loading...</div>
+                    <div class="user-role" id="nav-role">Staff</div>
+                </div>
+                <a href="#" onclick="handleLogout(event)" title="Log Out" style="color: var(--danger); font-size: 1.2rem;">
+                    <i class="fa-solid fa-power-off"></i>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- A. SECTION: DASHBOARD -->
+            <section id="section-dashboard" class="page-section active">
+                <div class="content-header">
+                    <h2 class="page-title">Management Dashboard</h2>
+                    <span id="dashboard-date" class="user-role">Today</span>
+                </div>
+                
+                <!-- Metrics Summary Grid -->
+                <div class="summary-grid">
+                    <div class="card-summary glass">
+                        <div class="icon-box icon-blue">
+                            <i class="fa-solid fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <div class="summary-value" id="metric-appointments">0</div>
+                            <div class="summary-label">Total Appointments</div>
+                        </div>
+                    </div>
+                    <div class="card-summary glass">
+                        <div class="icon-box icon-purple">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </div>
+                        <div>
+                            <div class="summary-value" id="metric-invoices">0</div>
+                            <div class="summary-label">Bills Invoiced</div>
+                        </div>
+                    </div>
+                    <div class="card-summary glass">
+                        <div class="icon-box icon-green">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                        <div>
+                            <div class="summary-value" id="metric-revenue">LKR 0.00</div>
+                            <div class="summary-label">Total Paid Revenue</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Reports Charts -->
+                <div class="reports-layout">
+                    <!-- Chart 1: Revenue by Dentist -->
+                    <div class="chart-card glass">
+                        <h3 class="chart-title"><i class="fa-solid fa-user-doctor"></i> Revenue Generated by Dentist (LKR)</h3>
+                        <div class="chart-bar-list" id="report-dentist-revenue">
+                            <!-- Injected dynamically by JS -->
+                            <p style="color: var(--text-muted);">No revenue data available.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart 2: Popular Treatments -->
+                    <div class="chart-card glass">
+                        <h3 class="chart-title"><i class="fa-solid fa-chart-pie"></i> Treatments Popularity (Bookings Count)</h3>
+                        <div class="chart-bar-list" id="report-treatment-popularity">
+                            <!-- Injected dynamically by JS -->
+                            <p style="color: var(--text-muted);">No treatment data available.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- B. SECTION: REGISTER APPOINTMENT -->
+            <section id="section-register" class="page-section">
+                <div class="content-header">
+                    <h2 class="page-title">Register New Appointment</h2>
+                </div>
+                
+                <div class="content-card glass">
+                    <div id="register-alert" class="alert"></div>
+                    
+                    <form id="register-form" onsubmit="handleRegisterAppointment(event)">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">Patient Full Name</label>
+                                <input type="text" id="appt-patientName" class="form-input" placeholder="e.g. John Doe" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Contact Number</label>
+                                <input type="tel" id="appt-patientContact" class="form-input" placeholder="e.g. 0771234567" pattern="[0-9]{10}" title="Must be exactly 10 digits" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Patient Home Address</label>
+                            <input type="text" id="appt-patientAddress" class="form-input" placeholder="Street Address, City" required>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">Assigned Dentist</label>
+                                <select id="appt-dentistId" class="form-select" required>
+                                    <option value="">Select Dentist</option>
+                                    <!-- Dynamic options -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Treatment Type</label>
+                                <select id="appt-treatmentId" class="form-select" required>
+                                    <option value="">Select Treatment</option>
+                                    <!-- Dynamic options -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">Appointment Date</label>
+                                <input type="date" id="appt-appointmentDate" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Appointment Time</label>
+                                <input type="time" id="appt-appointmentTime" class="form-input" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: auto; min-width: 200px;">
+                            <i class="fa-solid fa-check"></i> Register Appointment
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- C. SECTION: SEARCH & DISPLAY APPOINTMENT -->
+            <section id="section-search" class="page-section">
+                <div class="content-header">
+                    <h2 class="page-title">Search Appointment Details</h2>
+                </div>
+
+                <div class="content-card glass">
+                    <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 0;">
+                        <input type="text" id="search-number" class="form-input" placeholder="Enter Appointment Number (e.g. APT-0001)" required style="flex-grow: 1;">
+                        <button onclick="handleSearchAppointment()" class="btn btn-primary" style="width: auto;">
+                            <i class="fa-solid fa-magnifying-glass"></i> Search
+                        </button>
+                    </div>
+                </div>
+
+                <div id="search-alert" class="alert alert-danger" style="margin-top: 20px;"></div>
+
+                <!-- Display Appointment Info Card -->
+                <div id="search-result-card" class="content-card glass" style="display: none;">
+                    <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; color: var(--primary);">
+                        <i class="fa-solid fa-file-prescription"></i> Appointment Information
+                    </h3>
+                    
+                    <div class="grid-2" style="font-size: 1.05rem; line-height: 1.8;">
+                        <div>
+                            <p><strong style="color: var(--text-muted);">Appointment No:</strong> <span id="view-appt-num" style="font-weight: 600; color: #00f2fe;"></span></p>
+                            <p><strong style="color: var(--text-muted);">Patient Name:</strong> <span id="view-patient-name"></span></p>
+                            <p><strong style="color: var(--text-muted);">Contact:</strong> <span id="view-patient-contact"></span></p>
+                            <p><strong style="color: var(--text-muted);">Address:</strong> <span id="view-patient-address"></span></p>
+                        </div>
+                        <div>
+                            <p><strong style="color: var(--text-muted);">Dentist Name:</strong> <span id="view-dentist-name"></span></p>
+                            <p><strong style="color: var(--text-muted);">Treatment:</strong> <span id="view-treatment-name"></span></p>
+                            <p><strong style="color: var(--text-muted);">Scheduled Date:</strong> <span id="view-appt-date"></span></p>
+                            <p><strong style="color: var(--text-muted);">Scheduled Time:</strong> <span id="view-appt-time"></span></p>
+                            <p><strong style="color: var(--text-muted);">Booking Status:</strong> <span id="view-appt-status" class="badge"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- D. SECTION: CALCULATE & PRINT BILL -->
+            <section id="section-billing" class="page-section">
+                <div class="content-header">
+                    <h2 class="page-title">Billing & Invoicing</h2>
+                </div>
+
+                <div class="grid-2">
+                    <!-- Left: Bill calculation controls -->
+                    <div class="content-card glass" style="height: fit-content;">
+                        <h3 style="margin-bottom: 20px; color: var(--primary);"><i class="fa-solid fa-calculator"></i> Invoice Generator</h3>
+                        <div id="billing-alert" class="alert"></div>
+
+                        <div class="form-group">
+                            <label class="form-label">Appointment Number</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="bill-apptNum" class="form-input" placeholder="e.g. APT-0001" required>
+                                <button type="button" onclick="handleBillingCalculate()" class="btn btn-secondary" style="width: auto;">
+                                    Calculate
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Clinic Membership/Billing Strategy</label>
+                            <select id="bill-strategy" class="form-select" onchange="handleBillingCalculate()">
+                                <option value="STANDARD">Standard Patient (No strategy discount)</option>
+                                <option value="LOYALTY">Loyalty Card Member (10% off Doctor Fee)</option>
+                                <option value="SENIOR">Senior Citizen Patient (15% off Treatment Cost)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Manual Discount (LKR)</label>
+                            <input type="number" id="bill-discount" class="form-input" value="0" min="0" step="100" oninput="handleBillingCalculate()">
+                        </div>
+
+                        <div class="grid-2" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--glass-border); font-size: 0.95rem;">
+                            <div>
+                                <p style="color: var(--text-muted);">Doctor Fee:</p>
+                                <p style="color: var(--text-muted);">Treatment Cost:</p>
+                                <p style="color: var(--text-muted); font-weight: bold;">Grand Total:</p>
+                                <p style="color: var(--primary); font-weight: bold;">Strategy Discount:</p>
+                                <p style="color: var(--success); font-weight: bold; font-size: 1.1rem; margin-top: 10px;">Net Payable:</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p id="breakdown-doctor">LKR 0.00</p>
+                                <p id="breakdown-treatment">LKR 0.00</p>
+                                <p id="breakdown-total" style="font-weight: bold;">LKR 0.00</p>
+                                <p id="breakdown-discount" style="color: var(--primary); font-weight: bold;">LKR 0.00</p>
+                                <p id="breakdown-net" style="color: var(--success); font-weight: bold; font-size: 1.1rem; margin-top: 10px;">LKR 0.00</p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 30px;">
+                            <button onclick="handleGenerateBill()" class="btn btn-success" id="btn-generate-bill" disabled style="flex-grow: 1;">
+                                <i class="fa-solid fa-file-invoice"></i> Save Invoice
+                            </button>
+                            <button onclick="handlePayBill()" class="btn btn-primary" id="btn-pay-bill" disabled style="flex-grow: 1;">
+                                <i class="fa-solid fa-hand-holding-dollar"></i> Record Payment
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Printable Receipt Mockup -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <h3 style="color: var(--text-muted); margin-bottom: 10px;"><i class="fa-solid fa-receipt"></i> Bill Preview</h3>
+                        <div id="receipt-preview" class="receipt-box" style="width: 100%;">
+                            <div class="receipt-header">
+                                <div class="receipt-title">SUNRISE DENTAL CLINIC</div>
+                                <div style="font-size: 0.8rem; margin-top: 4px;">No. 45, Flower Road, Colombo 07</div>
+                                <div style="font-size: 0.8rem;">Tel: +94 11 234 5678</div>
+                            </div>
+                            <div class="receipt-body">
+                                <div style="text-align: center; font-weight: bold; margin-bottom: 15px;">INVOICE / RECEIPT</div>
+                                <div class="receipt-row">
+                                    <span>Date: <span id="r-date">YYYY-MM-DD</span></span>
+                                    <span>Bill No: <span id="r-bill-id">PENDING</span></span>
+                                </div>
+                                <div class="receipt-row" style="margin-bottom: 15px;">
+                                    <span>Appt: <span id="r-appt-num">APT-XXXX</span></span>
+                                    <span>Status: <span id="r-status" style="font-weight: bold;">UNPAID</span></span>
+                                </div>
+                                <div style="border-bottom: 1px dashed #94a3b8; margin-bottom: 10px;"></div>
+                                <div class="receipt-row">
+                                    <span>Patient:</span>
+                                    <span id="r-patient">Patient Name</span>
+                                </div>
+                                <div class="receipt-row">
+                                    <span>Doctor:</span>
+                                    <span id="r-dentist">Dr. Dentist Name</span>
+                                </div>
+                                <div class="receipt-row" style="margin-bottom: 10px;">
+                                    <span>Treatment:</span>
+                                    <span id="r-treatment">Treatment Name</span>
+                                </div>
+                                <div style="border-bottom: 1px dashed #94a3b8; margin-bottom: 10px;"></div>
+                                <div class="receipt-row">
+                                    <span>Consultation Fee</span>
+                                    <span id="r-doctor-fee">0.00</span>
+                                </div>
+                                <div class="receipt-row">
+                                    <span>Treatment Fee</span>
+                                    <span id="r-treatment-fee">0.00</span>
+                                </div>
+                                <div class="receipt-row" style="color: #64748b;">
+                                    <span>Discount Applied</span>
+                                    <span id="r-discount">-0.00</span>
+                                </div>
+                                <div class="receipt-total-row">
+                                    <span>NET AMOUNT</span>
+                                    <span id="r-net">LKR 0.00</span>
+                                </div>
+                            </div>
+                            <div class="receipt-footer">
+                                <div>Thank you for choosing Sunrise Dental!</div>
+                                <div>Keep smiling & stay healthy.</div>
+                            </div>
+                        </div>
+                        <button onclick="window.print()" class="btn btn-secondary" style="width: auto; margin-top: 15px;">
+                            <i class="fa-solid fa-print"></i> Print Receipt
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- E. SECTION: ALERTS & NOTIFICATION LOG -->
+            <section id="section-notifications" class="page-section">
+                <div class="content-header">
+                    <h2 class="page-title">Simulated SMS & Email Logs</h2>
+                    <button onclick="triggerNotificationDispatch()" class="btn btn-primary" style="width: auto;">
+                        <i class="fa-solid fa-paper-plane"></i> Dispatch Queue
+                    </button>
+                </div>
+                
+                <div class="content-card glass">
+                    <p style="margin-bottom: 20px; color: var(--text-muted);">
+                        To satisfy automated messaging requirements, our system logs notification templates for patients when appointments are booked. Clicking <strong>Dispatch Queue</strong> triggers the messaging service worker simulation.
+                    </p>
+                    
+                    <div id="notification-alert" class="alert"></div>
+
+                    <div class="table-container">
+                        <table class="table-glass" id="notifications-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Appt No</th>
+                                    <th>Recipient Contact</th>
+                                    <th>Type</th>
+                                    <th>Message Text</th>
+                                    <th>Timestamp</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- F. SECTION: HELP & STEP-BY-STEP GUIDES -->
+            <section id="section-help" class="page-section">
+                <div class="content-header">
+                    <h2 class="page-title">System Documentation & Help Guides</h2>
+                </div>
+
+                <div class="help-card glass">
+                    <h3 class="help-title"><i class="fa-solid fa-1"></i> Registering a Patient Appointment</h3>
+                    <ul class="help-step-list">
+                        <li>Navigate to the "Register Appointment" tab on the sidebar.</li>
+                        <li>Enter the patient's Full Name, 10-digit mobile contact number, and Home Address.</li>
+                        <li>Select the assigned Dentist (consultation fees will update accordingly).</li>
+                        <li>Select the Treatment Type (cleaning, extraction, braces, etc. have fixed costs).</li>
+                        <li>Pick the Appointment Date and Time, then click "Register Appointment".</li>
+                        <li>The system automatically executes a database check to ensure the dentist has no double bookings on the selected time, and queues an SMS confirmation alert.</li>
+                    </ul>
+                </div>
+
+                <div class="help-card glass">
+                    <h3 class="help-title"><i class="fa-solid fa-2"></i> Searching Appointment Bookings</h3>
+                    <ul class="help-step-list">
+                        <li>Navigate to the "Search Appointment" tab.</li>
+                        <li>Type in the Appointment Number (e.g. APT-0001) and hit Enter or click "Search".</li>
+                        <li>The system queries the database and displays the patient profile, date/time, and appointment status (Pending, Completed, Cancelled).</li>
+                    </ul>
+                </div>
+
+                <div class="help-card glass">
+                    <h3 class="help-title"><i class="fa-solid fa-3"></i> Generating Bills and Invoicing</h3>
+                    <ul class="help-step-list">
+                        <li>Navigate to the "Calculate & Bill" tab.</li>
+                        <li>Input the Appointment Number (e.g., APT-0001) and click "Calculate".</li>
+                        <li>Choose a pricing strategy: Standard, Loyalty Member (10% off Doctor Fee), or Senior Citizen (15% off Treatment Cost).</li>
+                        <li>If required, specify an additional Manual Discount in LKR.</li>
+                        <li>Observe the real-time calculated breakdown on screen.</li>
+                        <li>Click "Save Invoice" to write the bill record to the database (this transitions the appointment status to "Completed").</li>
+                        <li>Click "Record Payment" when the patient hands over cash/card to mark the invoice as "Paid".</li>
+                        <li>Use "Print Receipt" to print a clean paper receipt for patient records.</li>
+                    </ul>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Application Script Logic -->
+    <script src="js/app.js"></script>
+</body>
+</html>
