@@ -22,7 +22,9 @@ ehthumbs.db
 Desktop.ini
 .DS_Store
 
-# Temporary log files
+# Temporary log and error files
 *.log
 hs_err_pid*
 replay_pid*
+build_err.txt
+cookies.txt

@@ -79,4 +79,73 @@ public class UserDAO {
         }
         return null;
     }
+
+    /**
+     * Retrieve all users in the system.
+     * @return List of User objects
+     */
+    public java.util.List<User> getAllUsers() {
+        java.util.List<User> list = new java.util.ArrayList<>();
+        String sql = "SELECT id, username, role, full_name, email, created_at FROM users ORDER BY id ASC";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setUsername(rs.getString("username"));
+                user.setRole(rs.getString("role"));
+                user.setFullName(rs.getString("full_name"));
+                user.setEmail(rs.getString("email"));
+                user.setCreatedAt(rs.getTimestamp("created_at"));
+                list.add(user);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching all users: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    /**
+     * Create a new user with hashed password.
+     * @param user User object containing username, role, fullName, email
+     * @param plainPassword Plaintext password to hash
+     * @return true if inserted successfully
+     */
+    public boolean createUser(User user, String plainPassword) {
+        String hashedPassword = HashUtil.sha256(plainPassword);
+        String sql = "INSERT INTO users (username, password_hash, role, full_name, email) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, user.getUsername().trim());
+            pstmt.setString(2, hashedPassword);
+            pstmt.setString(3, user.getRole());
+            pstmt.setString(4, user.getFullName());
+            pstmt.setString(5, user.getEmail());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error creating user: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * Delete a user by ID (prevents deleting primary 'admin').
+     * @param userId User ID to delete
+     * @return true if deleted successfully
+     */
+    public boolean deleteUser(int userId) {
+        String sql = "DELETE FROM users WHERE id = ? AND username != 'admin'";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, userId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error deleting user: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

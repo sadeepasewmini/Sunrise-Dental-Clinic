@@ -130,6 +130,56 @@ public class AppointmentDAO {
         return null;
     }
 
+    /**
+     * Search appointments by appointment number, patient name, or contact number (case-insensitive substring match).
+     * @param query Search query text
+     * @return List of matching appointments
+     */
+    public List<Appointment> searchAppointments(String query) {
+        List<Appointment> list = new ArrayList<>();
+        String sql = "SELECT a.*, d.name AS dentist_name, t.name AS treatment_name " +
+                     "FROM appointments a " +
+                     "JOIN dentists d ON a.dentist_id = d.id " +
+                     "JOIN treatments t ON a.treatment_id = t.id " +
+                     "WHERE LOWER(a.appointment_number) LIKE ? " +
+                     "OR LOWER(a.patient_name) LIKE ? " +
+                     "OR a.patient_contact LIKE ? " +
+                     "ORDER BY a.appointment_date DESC, a.appointment_time DESC";
+                     
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            String pattern = "%" + query.toLowerCase().trim() + "%";
+            pstmt.setString(1, pattern);
+            pstmt.setString(2, pattern);
+            pstmt.setString(3, pattern);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Appointment a = new Appointment();
+                    a.setId(rs.getInt("id"));
+                    a.setAppointmentNumber(rs.getString("appointment_number"));
+                    a.setPatientName(rs.getString("patient_name"));
+                    a.setPatientAddress(rs.getString("patient_address"));
+                    a.setPatientContact(rs.getString("patient_contact"));
+                    a.setDentistId(rs.getInt("dentist_id"));
+                    a.setTreatmentId(rs.getInt("treatment_id"));
+                    a.setAppointmentDate(rs.getDate("appointment_date"));
+                    a.setAppointmentTime(rs.getTime("appointment_time"));
+                    a.setStatus(rs.getString("status"));
+                    a.setCreatedAt(rs.getTimestamp("created_at"));
+                    a.setDentistName(rs.getString("dentist_name"));
+                    a.setTreatmentName(rs.getString("treatment_name"));
+                    list.add(a);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error searching appointments: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public boolean updateStatus(String apptNum, String status) {
         String sql = "UPDATE appointments SET status = ? WHERE appointment_number = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();

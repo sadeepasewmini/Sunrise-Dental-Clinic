@@ -85,7 +85,7 @@ function showDashboard() {
     
     // Set user widgets
     document.getElementById("nav-username").innerText = currentUser.fullName;
-    document.getElementById("nav-role").innerText = currentUser.role;
+    document.getElementById("nav-role").innerText = currentUser.role + " Portal";
     document.getElementById("nav-avatar").innerText = currentUser.fullName.charAt(0);
     
     // Update footer/headers
@@ -95,37 +95,81 @@ function showDashboard() {
     loadDropdownData();
     loadDashboardAnalytics();
     loadNotifications();
+    applyRolePermissions();
     
     switchSection("dashboard");
+}
+
+function applyRolePermissions() {
+    const isStaff = currentUser && currentUser.role.toLowerCase() === "staff";
+    
+    // 1. Revenue Metric Card (Restricted for Staff)
+    const revenueVal = document.getElementById("metric-revenue");
+    if (revenueVal) {
+        if (isStaff) {
+            revenueVal.innerText = "🔒 Admin Only";
+            revenueVal.style.fontSize = "1rem";
+            revenueVal.style.color = "var(--text-muted)";
+        }
+    }
+
+    // 2. Revenue by Dentist Chart (Hidden for Staff)
+    const dentistChartCard = document.getElementById("report-dentist-revenue")?.closest(".chart-card");
+    if (dentistChartCard) {
+        dentistChartCard.style.display = isStaff ? "none" : "block";
+    }
+
+    // 3. Dispatch Notification Queue Button (Admin Only)
+    const dispatchBtn = document.querySelector("button[onclick='triggerNotificationDispatch()']");
+    if (dispatchBtn) {
+        dispatchBtn.style.display = isStaff ? "none" : "inline-flex";
+    }
+
+    // 4. User Management Menu Item (Admin Only)
+    const userMenuItem = document.getElementById("menu-item-users");
+    if (userMenuItem) {
+        userMenuItem.style.display = isStaff ? "none" : "block";
+    }
 }
 
 // ==========================================
 // 2. SIDEBAR SECTION SWITCHER
 // ==========================================
+const sectionTitles = {
+    dashboard: "Dashboard",
+    register: "Register New Appointment",
+    search: "Search Appointment",
+    billing: "Calculate & Bill",
+    notifications: "Alerts & Notification Logs",
+    users: "User Management (Admin Only)",
+    help: "Help & Guide"
+};
+
 function switchSection(sectionId) {
     // Toggle active classes on page content
     const sections = document.querySelectorAll(".page-section");
     sections.forEach(sec => sec.classList.remove("active"));
     
     const targetSection = document.getElementById(`section-${sectionId}`);
-    if (targetSection) {
-        targetSection.classList.add("active");
-    }
+    if (targetSection) targetSection.classList.add("active");
 
     // Toggle active classes on sidebar menu items
     const menuItems = document.querySelectorAll(".menu-item");
     menuItems.forEach(item => item.classList.remove("active"));
-    
-    // Find matching click target
-    const items = Array.from(menuItems);
-    const matched = items.find(el => el.getAttribute("onclick").includes(sectionId));
+    const matched = Array.from(menuItems).find(el => el.getAttribute("onclick").includes(sectionId));
     if (matched) matched.classList.add("active");
+
+    // Update topbar title
+    const titleEl = document.getElementById("topbar-title");
+    if (titleEl) titleEl.innerText = sectionTitles[sectionId] || "Dashboard";
 
     // Perform specific section reloads
     if (sectionId === "dashboard") {
         loadDashboardAnalytics();
     } else if (sectionId === "notifications") {
         loadNotifications();
+    } else if (sectionId === "users") {
+        loadUsers();
     }
 }
 
@@ -149,7 +193,8 @@ async function loadDropdownData() {
         const dentistSel = document.getElementById("appt-dentistId");
         dentistSel.innerHTML = '<option value="">Select Dentist</option>';
         dentistsList.forEach(d => {
-            dentistSel.innerHTML += `<option value="${d.id}">${d.name} (${d.specialization}) - LKR ${d.consultationFee}</option>`;
+            const fee = d.consultationFee ? d.consultationFee.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0.00";
+            dentistSel.innerHTML += `<option value="${d.id}">${d.name} (${d.specialization}) - LKR ${fee}</option>`;
         });
 
         const treatmentSel = document.getElementById("appt-treatmentId");
@@ -224,40 +269,60 @@ async function handleRegisterAppointment(event) {
 async function handleSearchAppointment() {
     const alertBox = document.getElementById("search-alert");
     const resultCard = document.getElementById("search-result-card");
+    const tableCard = document.getElementById("search-results-table-card");
+    const tbody = document.getElementById("search-results-table-body");
+
     alertBox.style.display = "none";
     resultCard.style.display = "none";
+    if (tableCard) tableCard.style.display = "none";
 
     const searchInput = document.getElementById("search-number").value.trim();
     if (!searchInput) {
-        alertBox.innerText = "Please enter an appointment number.";
+        alertBox.innerText = "Please enter an appointment number or patient name.";
         alertBox.style.display = "block";
         return;
     }
 
     try {
-        const res = await fetch(`api/appointments?number=${encodeURIComponent(searchInput)}`);
+        const res = await fetch(`api/appointments?query=${encodeURIComponent(searchInput)}`);
         const data = await res.json();
 
-        if (res.ok) {
-            document.getElementById("view-appt-num").innerText = data.appointmentNumber;
-            document.getElementById("view-patient-name").innerText = data.patientName;
-            document.getElementById("view-patient-contact").innerText = data.patientContact;
-            document.getElementById("view-patient-address").innerText = data.patientAddress;
-            document.getElementById("view-dentist-name").innerText = data.dentistName;
-            document.getElementById("view-treatment-name").innerText = data.treatmentName;
-            document.getElementById("view-appt-date").innerText = data.appointmentDate;
-            document.getElementById("view-appt-time").innerText = data.appointmentTime;
-            
-            const statusEl = document.getElementById("view-appt-status");
-            statusEl.innerText = data.status.toUpperCase();
-            
-            // Clear status classes
-            statusEl.className = "badge";
-            if (data.status === "Pending") statusEl.classList.add("badge-pending");
-            else if (data.status === "Completed") statusEl.classList.add("badge-completed");
-            else if (data.status === "Cancelled") statusEl.classList.add("badge-cancelled");
+        if (res.ok && Array.isArray(data)) {
+            if (data.length === 0) {
+                alertBox.innerText = `No appointments found matching '${searchInput}'.`;
+                alertBox.style.display = "block";
+                return;
+            }
 
-            resultCard.style.display = "block";
+            if (data.length === 1) {
+                // Single result: show details card directly
+                displaySingleAppointmentDetails(data[0]);
+            } else {
+                // Multiple results: render table list
+                tbody.innerHTML = '';
+                data.forEach(a => {
+                    const statusClass = a.status === "Pending" ? "badge-pending" : 
+                                       (a.status === "Completed" ? "badge-completed" : "badge-cancelled");
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td style="font-weight:600; color:var(--primary);">${a.appointmentNumber}</td>
+                        <td style="font-weight:600;">${a.patientName}</td>
+                        <td>${a.patientContact}</td>
+                        <td>${a.dentistName}</td>
+                        <td>${a.appointmentDate} at ${a.appointmentTime}</td>
+                        <td><span class="badge ${statusClass}">${a.status}</span></td>
+                        <td>
+                            <button class="btn btn-primary" style="padding:4px 10px; font-size:0.75rem; width:auto;" onclick='displaySingleAppointmentDetails(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
+                                <i class="fa-solid fa-eye"></i> View
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                tableCard.style.display = "block";
+            }
+        } else if (data && data.appointmentNumber) {
+            displaySingleAppointmentDetails(data);
         } else {
             alertBox.innerText = data.message || "Appointment not found.";
             alertBox.style.display = "block";
@@ -267,6 +332,29 @@ async function handleSearchAppointment() {
         alertBox.style.display = "block";
         console.error(e);
     }
+}
+
+function displaySingleAppointmentDetails(appt) {
+    const resultCard = document.getElementById("search-result-card");
+    document.getElementById("view-appt-num").innerText = appt.appointmentNumber;
+    document.getElementById("view-patient-name").innerText = appt.patientName;
+    document.getElementById("view-patient-contact").innerText = appt.patientContact;
+    document.getElementById("view-patient-address").innerText = appt.patientAddress;
+    document.getElementById("view-dentist-name").innerText = appt.dentistName;
+    document.getElementById("view-treatment-name").innerText = appt.treatmentName;
+    document.getElementById("view-appt-date").innerText = appt.appointmentDate;
+    document.getElementById("view-appt-time").innerText = appt.appointmentTime;
+    
+    const statusEl = document.getElementById("view-appt-status");
+    statusEl.innerText = appt.status.toUpperCase();
+    
+    statusEl.className = "badge";
+    if (appt.status === "Pending") statusEl.classList.add("badge-pending");
+    else if (appt.status === "Completed") statusEl.classList.add("badge-completed");
+    else if (appt.status === "Cancelled") statusEl.classList.add("badge-cancelled");
+
+    resultCard.style.display = "block";
+    resultCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 // ==========================================
@@ -547,6 +635,8 @@ async function loadDashboardAnalytics() {
             drawBarChart("report-treatment-popularity", treatmentPopularity, ' bookings', false);
         }
 
+        // Re-apply role permissions (e.g. restrict revenue metrics for staff)
+        applyRolePermissions();
     } catch (e) {
         console.error("Error loading analytics data", e);
     }
@@ -591,4 +681,101 @@ function drawBarChart(containerId, dataMap, valueSuffix = '', isCurrency = false
             if (fill) fill.style.width = `${percentage}%`;
         }, 100);
     });
+}
+
+// ==========================================
+// 9. USER MANAGEMENT SERVICES (ADMIN ONLY)
+// ==========================================
+async function loadUsers() {
+    const tbody = document.getElementById("users-table-body");
+    if (!tbody) return;
+
+    try {
+        const res = await fetch("api/users");
+        const users = await res.json();
+
+        tbody.innerHTML = '';
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No users found.</td></tr>';
+            return;
+        }
+
+        users.forEach(u => {
+            const roleBadge = u.role === "Admin" ? "badge-sent" : "badge-completed";
+            const deleteBtn = u.username === "admin" ? 
+                '<span style="font-size:0.75rem; color:var(--text-muted);">Primary Admin</span>' :
+                `<button onclick="handleDeleteUser(${u.id}, '${u.username}')" class="btn btn-danger" style="padding:4px 10px; font-size:0.75rem; width:auto;"><i class="fa-solid fa-trash"></i> Delete</button>`;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${u.id}</td>
+                    <td style="font-weight:600; color:var(--primary);">${u.username}</td>
+                    <td>${u.fullName}</td>
+                    <td><span class="badge ${roleBadge}">${u.role}</span></td>
+                    <td>${deleteBtn}</td>
+                </tr>
+            `;
+        });
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--danger);">Error loading user list.</td></tr>';
+        console.error(e);
+    }
+}
+
+async function handleCreateUser(event) {
+    event.preventDefault();
+    const alertBox = document.getElementById("user-create-alert");
+    alertBox.style.display = "none";
+    alertBox.className = "alert";
+
+    const username = document.getElementById("user-username").value.trim();
+    const password = document.getElementById("user-password").value;
+    const fullName = document.getElementById("user-fullname").value.trim();
+    const role = document.getElementById("user-role").value;
+    const email = document.getElementById("user-email").value.trim();
+
+    try {
+        const res = await fetch("api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password, fullName, role, email })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            alertBox.innerText = data.message;
+            alertBox.classList.add("alert-success");
+            alertBox.style.display = "block";
+            document.getElementById("create-user-form").reset();
+            loadUsers();
+        } else {
+            alertBox.innerText = data.message || "Failed to create user.";
+            alertBox.classList.add("alert-danger");
+            alertBox.style.display = "block";
+        }
+    } catch (e) {
+        alertBox.innerText = "Error connecting to server.";
+        alertBox.classList.add("alert-danger");
+        alertBox.style.display = "block";
+        console.error(e);
+    }
+}
+
+async function handleDeleteUser(userId, username) {
+    if (!confirm(`Are you sure you want to delete user '${username}'?`)) return;
+
+    try {
+        const res = await fetch(`api/users?id=${userId}`, { method: "DELETE" });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            alert("User deleted successfully.");
+            loadUsers();
+        } else {
+            alert(data.message || "Failed to delete user.");
+        }
+    } catch (e) {
+        alert("Server connection error.");
+        console.error(e);
+    }
 }

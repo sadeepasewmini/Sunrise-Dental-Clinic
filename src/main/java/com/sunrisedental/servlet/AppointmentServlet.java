@@ -1,9 +1,11 @@
 package com.sunrisedental.servlet;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.sunrisedental.dao.AppointmentDAO;
+import com.sunrisedental.dao.DentistDAO;
+import com.sunrisedental.dao.TreatmentDAO;
 import com.sunrisedental.model.Appointment;
+import com.sunrisedental.model.Dentist;
+import com.sunrisedental.model.Treatment;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -11,136 +13,135 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.Date;
 import java.sql.Time;
-import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet("/api/appointments")
+@WebServlet("/appointments")
 public class AppointmentServlet extends HttpServlet {
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
-    private final Gson gson = new Gson();
+    private final DentistDAO dentistDAO = new DentistDAO();
+    private final TreatmentDAO treatmentDAO = new TreatmentDAO();
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        
-        String number = request.getParameter("number");
-        
-        if (number != null && !number.trim().isEmpty()) {
-            // Search appointment by number
-            Appointment appt = appointmentDAO.getAppointmentByNumber(number);
-            if (appt != null) {
-                out.print(gson.toJson(appt));
-            } else {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                JsonObject err = new JsonObject();
-                err.addProperty("success", false);
-                err.addProperty("message", "Appointment not found with number: " + number);
-                out.print(gson.toJson(err));
-            }
-        } else {
-            // Return all appointments
-            List<Appointment> list = appointmentDAO.getAllAppointments();
-            out.print(gson.toJson(list));
+        String action = request.getParameter("action");
+        if (action == null) action = "register";
+
+        switch (action) {
+            case "search":
+                showSearchPage(request, response);
+                break;
+            case "register":
+            default:
+                showRegisterPage(request, response);
+                break;
         }
-        out.flush();
+    }
+
+    private void showRegisterPage(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        List<Dentist> dentists = dentistDAO.getAllDentists();
+        List<Treatment> treatments = treatmentDAO.getAllTreatments();
+
+        request.setAttribute("dentists", dentists);
+        request.setAttribute("treatments", treatments);
+        request.setAttribute("activeMenu", "register");
+
+        request.getRequestDispatcher("/WEB-INF/views/register-appointment.jsp").forward(request, response);
+    }
+
+    private void showSearchPage(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String query = request.getParameter("query");
+        if (query != null && !query.trim().isEmpty()) {
+            List<Appointment> searchResults = appointmentDAO.searchAppointments(query.trim());
+            request.setAttribute("searchResults", searchResults);
+            request.setAttribute("query", query.trim());
+        }
+        request.setAttribute("activeMenu", "search");
+        request.getRequestDispatcher("/WEB-INF/views/search-appointment.jsp").forward(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        JsonObject jsonResponse = new JsonObject();
+        String action = request.getParameter("action");
 
+        if ("create".equalsIgnoreCase(action)) {
+            handleCreateAppointment(request, response);
+        } else if ("updateStatus".equalsIgnoreCase(action)) {
+            handleUpdateStatus(request, response);
+        } else {
+            response.sendRedirect(request.getContextPath() + "/appointments?action=register");
+        }
+    }
+
+    private void handleCreateAppointment(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         try {
-            // Read and parse JSON request body
-            JsonObject body = gson.fromJson(request.getReader(), JsonObject.class);
-            
-            if (body == null) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                jsonResponse.addProperty("success", false);
-                jsonResponse.addProperty("message", "Request body is empty");
-                out.print(gson.toJson(jsonResponse));
-                return;
-            }
+            String name = request.getParameter("patientName");
+            String address = request.getParameter("patientAddress");
+            String contact = request.getParameter("patientContact");
+            int dentistId = Integer.parseInt(request.getParameter("dentistId"));
+            int treatmentId = Integer.parseInt(request.getParameter("treatmentId"));
+            String dateStr = request.getParameter("appointmentDate");
+            String timeStr = request.getParameter("appointmentTime");
 
-            // Extract parameters and validate
-            String patientName = body.has("patientName") ? body.get("patientName").getAsString() : null;
-            String patientAddress = body.has("patientAddress") ? body.get("patientAddress").getAsString() : null;
-            String patientContact = body.has("patientContact") ? body.get("patientContact").getAsString() : null;
-            int dentistId = body.has("dentistId") ? body.get("dentistId").getAsInt() : 0;
-            int treatmentId = body.has("treatmentId") ? body.get("treatmentId").getAsInt() : 0;
-            String dateStr = body.has("appointmentDate") ? body.get("appointmentDate").getAsString() : null;
-            String timeStr = body.has("appointmentTime") ? body.get("appointmentTime").getAsString() : null;
-
-            // Basic validation
-            if (patientName == null || patientName.trim().isEmpty() ||
-                patientAddress == null || patientAddress.trim().isEmpty() ||
-                patientContact == null || patientContact.trim().isEmpty() ||
-                dentistId == 0 || treatmentId == 0 ||
-                dateStr == null || dateStr.trim().isEmpty() ||
-                timeStr == null || timeStr.trim().isEmpty()) {
-                
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                jsonResponse.addProperty("success", false);
-                jsonResponse.addProperty("message", "All fields are required and must be valid");
-                out.print(gson.toJson(jsonResponse));
-                return;
-            }
-
-            // Create Appointment bean
-            Appointment appt = new Appointment();
-            appt.setPatientName(patientName.trim());
-            appt.setPatientAddress(patientAddress.trim());
-            appt.setPatientContact(patientContact.trim());
-            appt.setDentistId(dentistId);
-            appt.setTreatmentId(treatmentId);
-            
-            // Format time if it is HH:MM to HH:MM:00
-            if (timeStr.length() == 5) {
+            if (timeStr != null && timeStr.length() == 5) {
                 timeStr += ":00";
             }
-            
+
+            // --- Auto-Register Patient Logic ---
+            com.sunrisedental.dao.PatientDAO patientDAO = new com.sunrisedental.dao.PatientDAO();
+            com.sunrisedental.model.Patient existingPatient = patientDAO.getPatientByContact(contact);
+            if (existingPatient == null) {
+                com.sunrisedental.model.Patient newPatient = new com.sunrisedental.model.Patient(0, name, address, contact, "", null);
+                patientDAO.addPatient(newPatient);
+            }
+            // ------------------------------------
+
+            Appointment appt = new Appointment();
+            appt.setPatientName(name);
+            appt.setPatientAddress(address);
+            appt.setPatientContact(contact);
+            appt.setDentistId(dentistId);
+            appt.setTreatmentId(treatmentId);
             appt.setAppointmentDate(Date.valueOf(dateStr));
             appt.setAppointmentTime(Time.valueOf(timeStr));
+            appt.setStatus("Pending");
 
-            // Create in database (will execute the double-booking trigger)
             String apptNum = appointmentDAO.createAppointment(appt);
-            
-            jsonResponse.addProperty("success", true);
-            jsonResponse.addProperty("appointmentNumber", apptNum);
-            jsonResponse.addProperty("message", "Appointment registered successfully! Confirmation SMS queued.");
-            response.setStatus(HttpServletResponse.SC_CREATED);
-            
-        } catch (IllegalArgumentException e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            jsonResponse.addProperty("success", false);
-            jsonResponse.addProperty("message", "Invalid Date or Time format");
-        } catch (SQLException e) {
-            // Catch double booking trigger exception (SQLSTATE 45000) or other database errors
-            response.setStatus(HttpServletResponse.SC_CONFLICT);
-            jsonResponse.addProperty("success", false);
-            // SQLSTATE 45000 is thrown by trigger, check if it contains the message
-            String errorMsg = e.getMessage();
-            if (errorMsg.contains("Double booking error")) {
-                jsonResponse.addProperty("message", "Validation Error: The dentist is already booked at this date and time.");
+            if (apptNum != null) {
+                request.getSession().setAttribute("successMessage", "Appointment registered successfully! Number: " + apptNum);
+                response.sendRedirect(request.getContextPath() + "/appointments?action=search&query=" + apptNum);
             } else {
-                jsonResponse.addProperty("message", "Database Error: " + errorMsg);
+                request.setAttribute("errorMessage", "Failed to register appointment.");
+                showRegisterPage(request, response);
             }
         } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            jsonResponse.addProperty("success", false);
-            jsonResponse.addProperty("message", "Internal Server Error: " + e.getMessage());
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "Invalid input or schedule conflict: " + e.getMessage());
+            showRegisterPage(request, response);
         }
+    }
 
-        out.print(gson.toJson(jsonResponse));
-        out.flush();
+    private void handleUpdateStatus(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String apptNumber = request.getParameter("number");
+        String status = request.getParameter("status");
+        boolean ok = appointmentDAO.updateStatus(apptNumber, status);
+        if (ok) {
+            request.getSession().setAttribute("successMessage", "Appointment status updated to " + status);
+        } else {
+            request.getSession().setAttribute("errorMessage", "Failed to update appointment status.");
+        }
+        String redirectUrl = request.getParameter("redirectUrl");
+        if (redirectUrl != null && !redirectUrl.isEmpty()) {
+            response.sendRedirect(redirectUrl);
+        } else {
+            response.sendRedirect(request.getContextPath() + "/dashboard");
+        }
     }
 }

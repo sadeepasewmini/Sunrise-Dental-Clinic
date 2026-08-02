@@ -16,6 +16,17 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 1.5 Patients Table
+DROP TABLE IF EXISTS patients;
+CREATE TABLE patients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(200) NOT NULL,
+    contact_number VARCHAR(15) NOT NULL,
+    email VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 2. Dentists Table
 DROP TABLE IF EXISTS dentists;
 CREATE TABLE dentists (
@@ -194,14 +205,12 @@ DELIMITER ;
 -- SEED DATA (INITIAL DATA INSERTION)
 -- =========================================================================
 
--- Seed Users (Passwords are hashed with SHA-256 for:
--- admin123: 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
--- receptionist123: a27dce9d8b5488238487ca36967563b7487b12232e3d1cb98442360f033cfbd7
--- dentist123: 22990c57fbef2aeac16a2bf5e0caeafc43717c99e2040b0e3ac8d468d42794f0
+-- Seed Users (Passwords hashed with SHA-256):
+-- admin / admin123 : 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
+-- staff / staff123 : 10176e7b7b24d317acfcf8d2064cfd2f24e154f7b5a96603077d5ef813d6a6b6
 INSERT INTO users (username, password_hash, role, full_name, email) VALUES
 ('admin', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'Admin', 'Clinic Administrator', 'admin@sunrisedental.lk'),
-('receptionist', 'a27dce9d8b5488238487ca36967563b7487b12232e3d1cb98442360f033cfbd7', 'Receptionist', 'Sarah Perera', 'sarah.receptionist@sunrisedental.lk'),
-('dentist_sunil', '22990c57fbef2aeac16a2bf5e0caeafc43717c99e2040b0e3ac8d468d42794f0', 'Dentist', 'Dr. Sunil Perera', 'sunil@sunrisedental.lk');
+('staff', '10176e7b7b24d317acfcf8d2064cfd2f24e154f7b5a96603077d5ef813d6a6b6', 'Staff', 'Clinic Staff Member', 'staff@sunrisedental.lk');
 
 -- Seed Dentists
 INSERT INTO dentists (name, specialization, contact_number, consultation_fee) VALUES
