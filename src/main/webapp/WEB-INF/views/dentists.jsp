@@ -20,8 +20,18 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="specialization">Specialization</label>
-                    <input type="text" id="specialization" name="specialization" class="form-input" placeholder="e.g. Orthodontist, General Dentist, Endodontist" required>
+                    <label class="form-label" for="specialization">Specialization <span style="color:var(--danger);">*</span></label>
+                    <select id="specialization" name="specialization" class="form-select" required>
+                        <option value="" disabled selected>-- Select Specialization --</option>
+                        <option value="General Practitioner">General Practitioner / General Dentist</option>
+                        <option value="Orthodontist">Orthodontist (Braces &amp; Alignment)</option>
+                        <option value="Endodontist">Endodontist (Root Canal Specialist)</option>
+                        <option value="Pediatric Dentist">Pediatric Dentist (Child Specialist)</option>
+                        <option value="Periodontist">Periodontist (Gum Specialist)</option>
+                        <option value="Prosthodontist">Prosthodontist (Dentures &amp; Crowns)</option>
+                        <option value="Oral &amp; Maxillofacial Surgeon">Oral &amp; Maxillofacial Surgeon</option>
+                        <option value="Cosmetic Dentist">Cosmetic Dentist (Teeth Whitening &amp; Veneers)</option>
+                    </select>
                 </div>
             </div>
 
