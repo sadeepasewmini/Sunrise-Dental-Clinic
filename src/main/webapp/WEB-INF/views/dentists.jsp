@@ -94,13 +94,11 @@
                                     <i class="fa-solid fa-pen-to-square"></i> Edit
                                 </button>
 
-                                <form action="${pageContext.request.contextPath}/dentists" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to remove ${d.name}?');">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="id" value="${d.id}">
-                                    <button type="submit" class="btn btn-secondary" style="padding:6px 14px; font-size:0.8rem; background:var(--danger); border-color:var(--danger); color:#fff; border-radius:8px;">
-                                        <i class="fa-solid fa-trash"></i> Remove
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-secondary" 
+                                        style="padding:6px 14px; font-size:0.8rem; background:var(--danger); border-color:var(--danger); color:#fff; border-radius:8px;"
+                                        onclick="confirmDeleteDentist(${d.id}, '${d.name}')">
+                                    <i class="fa-solid fa-trash"></i> Remove
+                                </button>
                             </td>
                         </tr>
                     </c:forEach>
@@ -118,13 +116,13 @@
 </section>
 
 <!-- Glassmorphic Modal for Editing Dentist -->
-<div id="editDentistModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); backdrop-filter:blur(6px); z-index:9999; justify-content:center; align-items:center;">
-    <div style="background:rgba(255,255,255,0.95); backdrop-filter:blur(16px); border-radius:16px; width:90%; max-width:560px; padding:28px; border:1px solid rgba(255,255,255,0.8); box-shadow:0 20px 40px rgba(0,0,0,0.2); animation: popIn 0.3s ease;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:14px; margin-bottom:20px;">
-            <h3 style="margin:0; font-size:1.2rem; color:var(--primary-dark); font-weight:700;">
+<div id="editDentistModal" class="custom-modal-overlay">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h3>
                 <i class="fa-solid fa-user-pen" style="color:var(--primary);"></i> Edit Dentist Profile
             </h3>
-            <button type="button" onclick="closeEditDentistModal()" style="background:none; border:none; font-size:1.4rem; color:var(--text-muted); cursor:pointer;">&times;</button>
+            <button type="button" class="custom-modal-close" onclick="closeEditDentistModal()">&times;</button>
         </div>
 
         <form action="${pageContext.request.contextPath}/dentists" method="POST">
@@ -162,10 +160,41 @@
                 </div>
             </div>
 
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px; border-top:1px solid #e2e8f0; padding-top:16px;">
-                <button type="button" class="btn btn-secondary" onclick="closeEditDentistModal()" style="padding:10px 20px; border-radius:8px;">Cancel</button>
-                <button type="submit" class="btn btn-primary" style="padding:10px 24px; border-radius:8px;">
+            <div class="custom-modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeEditDentistModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">
                     <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Glassmorphic Modal for Delete Confirmation -->
+<div id="deleteDentistModal" class="custom-modal-overlay">
+    <div class="custom-modal-content" style="max-width: 440px; text-align: center;">
+        <div style="width:60px; height:60px; background:rgba(239, 68, 68, 0.12); color:var(--danger); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:1.8rem;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+
+        <h3 style="margin:0 0 10px; font-size:1.25rem; color:var(--text-dark); font-weight:700;">
+            Confirm Removal
+        </h3>
+        
+        <p style="color:var(--text-muted); font-size:0.95rem; line-height:1.5; margin:0 0 24px;">
+            Are you sure you want to remove <strong id="deleteDentistName" style="color:var(--primary-dark);"></strong>? This action cannot be undone.
+        </p>
+
+        <form action="${pageContext.request.contextPath}/dentists" method="POST" id="deleteDentistForm">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" id="deleteDentistId" name="id">
+
+            <div style="display:flex; justify-content:center; gap:12px;">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteDentistModal()" style="padding:10px 22px; border-radius:10px;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-secondary" style="padding:10px 22px; background:var(--danger); border-color:var(--danger); color:#fff; border-radius:10px; font-weight:600;">
+                    <i class="fa-solid fa-trash"></i> Yes, Remove
                 </button>
             </div>
         </form>
@@ -180,27 +209,96 @@ function openEditDentistModal(id, name, specialization, contactNumber, consultat
     document.getElementById('editContactNumber').value = contactNumber || '';
     document.getElementById('editConsultationFee').value = consultationFee;
 
-    const modal = document.getElementById('editDentistModal');
-    modal.style.display = 'flex';
+    document.getElementById('editDentistModal').style.display = 'flex';
 }
 
 function closeEditDentistModal() {
     document.getElementById('editDentistModal').style.display = 'none';
 }
 
-// Close modal when clicking outside content box
+function confirmDeleteDentist(id, name) {
+    document.getElementById('deleteDentistId').value = id;
+    document.getElementById('deleteDentistName').textContent = name;
+    document.getElementById('deleteDentistModal').style.display = 'flex';
+}
+
+function closeDeleteDentistModal() {
+    document.getElementById('deleteDentistModal').style.display = 'none';
+}
+
+// Close modals on clicking backdrop
 window.addEventListener('click', function(e) {
-    const modal = document.getElementById('editDentistModal');
-    if (e.target === modal) {
+    if (e.target.classList.contains('custom-modal-overlay')) {
         closeEditDentistModal();
+        closeDeleteDentistModal();
     }
 });
 </script>
 
 <style>
-@keyframes popIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+.custom-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.custom-modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    border-radius: 18px;
+    width: 90%;
+    max-width: 560px;
+    padding: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+}
+
+.custom-modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--primary-dark);
+    font-weight: 700;
+}
+
+.custom-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.custom-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+}
+
+@keyframes modalPopIn {
+    from { opacity: 0; transform: scale(0.92) translateY(-10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }
 </style>
 
