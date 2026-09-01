@@ -1,6 +1,53 @@
 // Sunrise Dental Clinic - SPA Application Script
 let currentUser = null;
 
+// Global Toast Popup Notification System
+function showToast(message, type, duration) {
+    if (!type) type = 'success';
+    if (!duration) duration = 4500;
+    if (!message || typeof message !== 'string' || !message.trim()) return;
+
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-popup toast-' + type;
+
+    let iconClass = 'fa-circle-check';
+    if (type === 'danger' || type === 'error') iconClass = 'fa-triangle-exclamation';
+    else if (type === 'info') iconClass = 'fa-circle-info';
+
+    toast.innerHTML = 
+        '<div class="toast-content">' +
+            '<i class="fa-solid ' + iconClass + ' toast-icon"></i>' +
+            '<span>' + message + '</span>' +
+        '</div>' +
+        '<button class="toast-close" onclick="dismissToast(this.parentElement)" title="Close">&times;</button>';
+
+    container.appendChild(toast);
+
+    if (duration > 0) {
+        setTimeout(function() {
+            dismissToast(toast);
+        }, duration);
+    }
+}
+
+function dismissToast(toast) {
+    if (!toast || toast.classList.contains('toast-hiding')) return;
+    toast.classList.add('toast-hiding');
+    setTimeout(() => {
+        if (toast && toast.parentElement) {
+            toast.parentElement.removeChild(toast);
+        }
+    }, 300);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     checkAuthStatus();
     // Set default date to today in registration form
@@ -11,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
         dateInput.value = today;
     }
 });
+
 
 // ==========================================
 // 1. AUTHENTICATION SERVICES
@@ -51,14 +99,13 @@ async function handleLogin(event) {
         
         if (data.success) {
             currentUser = data.user;
+            showToast("Welcome back, " + currentUser.fullName + "! Login successful.", "success");
             showDashboard();
         } else {
-            alertBox.innerText = data.message || "Invalid login credentials.";
-            alertBox.style.display = "block";
+            showToast(data.message || "Invalid login credentials.", "danger");
         }
     } catch (e) {
-        alertBox.innerText = "Error connecting to login server.";
-        alertBox.style.display = "block";
+        showToast("Error connecting to login server.", "danger");
         console.error(e);
     }
 }
@@ -142,6 +189,7 @@ const sectionTitles = {
     billing: "Calculate & Bill",
     notifications: "Alerts & Notification Logs",
     users: "User Management (Admin Only)",
+    audit: "Audit Trail & System Activity Logs",
     help: "Help & Guide"
 };
 
@@ -170,6 +218,8 @@ function switchSection(sectionId) {
         loadNotifications();
     } else if (sectionId === "users") {
         loadUsers();
+    } else if (sectionId === "audit") {
+        loadAuditLogs();
     }
 }
 
@@ -178,33 +228,90 @@ function switchSection(sectionId) {
 // ==========================================
 let dentistsList = [];
 let treatmentsList = [];
+let registeredPatientsList = [];
 
 async function loadDropdownData() {
     try {
-        const [dentistsRes, treatmentsRes] = await Promise.all([
+        const [dentistsRes, treatmentsRes, patientsRes] = await Promise.all([
             fetch("api/dentists"),
-            fetch("api/treatments")
+            fetch("api/treatments"),
+            fetch("api/patients").catch(() => null)
         ]);
         
         dentistsList = await dentistsRes.json();
         treatmentsList = await treatmentsRes.json();
 
+        if (patientsRes && patientsRes.ok) {
+            registeredPatientsList = await patientsRes.json();
+            setupPatientAutoFill();
+        }
+
         // Populate dropdowns in Register screen
         const dentistSel = document.getElementById("appt-dentistId");
-        dentistSel.innerHTML = '<option value="">Select Dentist</option>';
-        dentistsList.forEach(d => {
-            const fee = d.consultationFee ? d.consultationFee.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0.00";
-            dentistSel.innerHTML += `<option value="${d.id}">${d.name} (${d.specialization}) - LKR ${fee}</option>`;
-        });
+        if (dentistSel) {
+            dentistSel.innerHTML = '<option value="">Select Dentist</option>';
+            dentistsList.forEach(d => {
+                const fee = d.consultationFee ? d.consultationFee.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0.00";
+                dentistSel.innerHTML += `<option value="${d.id}">${d.name} (${d.specialization}) - LKR ${fee}</option>`;
+            });
+        }
 
         const treatmentSel = document.getElementById("appt-treatmentId");
-        treatmentSel.innerHTML = '<option value="">Select Treatment</option>';
-        treatmentsList.forEach(t => {
-            treatmentSel.innerHTML += `<option value="${t.id}">${t.name} - LKR ${t.cost}</option>`;
-        });
+        if (treatmentSel) {
+            treatmentSel.innerHTML = '<option value="">Select Treatment</option>';
+            treatmentsList.forEach(t => {
+                treatmentSel.innerHTML += `<option value="${t.id}">${t.name} - LKR ${t.cost}</option>`;
+            });
+        }
         
     } catch (e) {
         console.error("Failed to load master lookup lists", e);
+    }
+}
+
+function setupPatientAutoFill() {
+    const datalist = document.getElementById("spaPatientsDatalist");
+    if (datalist && registeredPatientsList.length > 0) {
+        datalist.innerHTML = registeredPatientsList.map(p => 
+            '<option value="' + p.name + '">' + (p.contactNumber || '') + ' | ' + (p.address || '') + '</option>'
+        ).join('');
+    }
+
+    const nameInput = document.getElementById("appt-patientName");
+    const contactInput = document.getElementById("appt-patientContact");
+    const addressInput = document.getElementById("appt-patientAddress");
+    const allergiesInput = document.getElementById("appt-allergies");
+    const conditionsInput = document.getElementById("appt-medicalConditions");
+    const badge = document.getElementById("spaAutoFillBadge");
+
+    if (nameInput && !nameInput.dataset.autofillAttached) {
+        nameInput.dataset.autofillAttached = "true";
+
+        const checkAndAutoFillSPA = function() {
+            const val = nameInput.value.trim().toLowerCase();
+            if (!val) {
+                if (badge) badge.style.display = "none";
+                return;
+            }
+
+            const match = registeredPatientsList.find(p => 
+                (p.name && p.name.toLowerCase() === val) || 
+                (p.contactNumber && p.contactNumber === val)
+            );
+
+            if (match) {
+                if (contactInput) contactInput.value = match.contactNumber || "";
+                if (addressInput) addressInput.value = match.address || "";
+                if (allergiesInput && match.allergies && match.allergies !== "None") allergiesInput.value = match.allergies;
+                if (conditionsInput && match.medicalConditions && match.medicalConditions !== "None") conditionsInput.value = match.medicalConditions;
+                if (badge) badge.style.display = "block";
+            } else {
+                if (badge) badge.style.display = "none";
+            }
+        };
+
+        nameInput.addEventListener("input", checkAndAutoFillSPA);
+        nameInput.addEventListener("change", checkAndAutoFillSPA);
     }
 }
 
@@ -224,10 +331,14 @@ async function handleRegisterAppointment(event) {
     const treatmentId = parseInt(document.getElementById("appt-treatmentId").value);
     const appointmentDate = document.getElementById("appt-appointmentDate").value;
     const appointmentTime = document.getElementById("appt-appointmentTime").value;
+    const toothNumber = document.getElementById("appt-toothNumber")?.value || "General";
+    const allergies = document.getElementById("appt-allergies")?.value || "None";
+    const medicalConditions = document.getElementById("appt-medicalConditions")?.value || "None";
 
     const payload = {
         patientName, patientContact, patientAddress,
-        dentistId, treatmentId, appointmentDate, appointmentTime
+        dentistId, treatmentId, appointmentDate, appointmentTime,
+        toothNumber, allergies, medicalConditions
     };
 
     try {
@@ -240,26 +351,48 @@ async function handleRegisterAppointment(event) {
         const data = await res.json();
         
         if (res.ok) {
-            alertBox.innerHTML = `<strong>Success!</strong> ${data.message} <br><strong>Appointment Number: ${data.appointmentNumber}</strong>`;
-            alertBox.classList.add("alert-success");
-            alertBox.style.display = "block";
+            showToast(`${data.message} - Appt No: ${data.appointmentNumber}`, "success");
             
             // Reset form
             document.getElementById("register-form").reset();
+            selectTooth('General');
             
             // Set default date again
             const today = new Date().toISOString().split('T')[0];
             document.getElementById("appt-appointmentDate").value = today;
         } else {
-            alertBox.innerText = data.message || "Error scheduling appointment.";
-            alertBox.classList.add("alert-danger");
-            alertBox.style.display = "block";
+            showToast(data.message || "Error scheduling appointment.", "danger");
         }
     } catch (e) {
-        alertBox.innerText = "Error contacting server.";
-        alertBox.classList.add("alert-danger");
-        alertBox.style.display = "block";
+        showToast("Error contacting server.", "danger");
         console.error(e);
+    }
+}
+
+function selectTooth(toothNum) {
+    const hiddenInput = document.getElementById("appt-toothNumber");
+    const displayDiv = document.getElementById("selected-tooth-display");
+    
+    const buttons = document.querySelectorAll(".tooth-btn");
+    buttons.forEach(btn => {
+        if (btn.innerText === toothNum.toString()) {
+            if (btn.classList.contains("selected") && toothNum !== 'General') {
+                btn.classList.remove("selected");
+                if (hiddenInput) hiddenInput.value = "General";
+                if (displayDiv) displayDiv.innerText = "Selected Tooth: General (Whole Mouth / Consultation)";
+            } else {
+                buttons.forEach(b => b.classList.remove("selected"));
+                if (toothNum !== 'General') btn.classList.add("selected");
+                if (hiddenInput) hiddenInput.value = toothNum === 'General' ? 'General' : `Tooth #${toothNum}`;
+                if (displayDiv) displayDiv.innerText = toothNum === 'General' ? "Selected Tooth: General (Whole Mouth / Consultation)" : `Selected Tooth: Tooth #${toothNum}`;
+            }
+        }
+    });
+
+    if (toothNum === 'General') {
+        buttons.forEach(b => b.classList.remove("selected"));
+        if (hiddenInput) hiddenInput.value = "General";
+        if (displayDiv) displayDiv.innerText = "Selected Tooth: General (Whole Mouth / Consultation)";
     }
 }
 
@@ -278,8 +411,7 @@ async function handleSearchAppointment() {
 
     const searchInput = document.getElementById("search-number").value.trim();
     if (!searchInput) {
-        alertBox.innerText = "Please enter an appointment number or patient name.";
-        alertBox.style.display = "block";
+        showToast("Please enter an appointment number or patient name.", "info");
         return;
     }
 
@@ -289,8 +421,7 @@ async function handleSearchAppointment() {
 
         if (res.ok && Array.isArray(data)) {
             if (data.length === 0) {
-                alertBox.innerText = `No appointments found matching '${searchInput}'.`;
-                alertBox.style.display = "block";
+                showToast(`No appointments found matching '${searchInput}'.`, "info");
                 return;
             }
 
@@ -324,12 +455,10 @@ async function handleSearchAppointment() {
         } else if (data && data.appointmentNumber) {
             displaySingleAppointmentDetails(data);
         } else {
-            alertBox.innerText = data.message || "Appointment not found.";
-            alertBox.style.display = "block";
+            showToast(data.message || "Appointment not found.", "danger");
         }
     } catch (e) {
-        alertBox.innerText = "Server error while searching.";
-        alertBox.style.display = "block";
+        showToast("Server error while searching.", "danger");
         console.error(e);
     }
 }
@@ -344,6 +473,16 @@ function displaySingleAppointmentDetails(appt) {
     document.getElementById("view-treatment-name").innerText = appt.treatmentName;
     document.getElementById("view-appt-date").innerText = appt.appointmentDate;
     document.getElementById("view-appt-time").innerText = appt.appointmentTime;
+
+    if (document.getElementById("view-tooth-number")) {
+        document.getElementById("view-tooth-number").innerText = appt.toothNumber || "General";
+    }
+    if (document.getElementById("view-patient-allergies")) {
+        document.getElementById("view-patient-allergies").innerText = `Allergies: ${appt.allergies || "None"}`;
+    }
+    if (document.getElementById("view-patient-conditions")) {
+        document.getElementById("view-patient-conditions").innerText = `Conditions: ${appt.medicalConditions || "None"}`;
+    }
     
     const statusEl = document.getElementById("view-appt-status");
     statusEl.innerText = appt.status.toUpperCase();
@@ -372,9 +511,7 @@ async function handleBillingCalculate() {
     const manualDiscount = parseFloat(document.getElementById("bill-discount").value) || 0;
 
     if (!apptNum) {
-        alertBox.innerText = "Please enter an appointment number to calculate.";
-        alertBox.classList.add("alert-danger");
-        alertBox.style.display = "block";
+        showToast("Please enter an appointment number to calculate.", "info");
         return;
     }
 
@@ -423,14 +560,10 @@ async function handleBillingCalculate() {
             // If a bill already exists in database, let's load it
             checkExistingInvoice(apptNum);
         } else {
-            alertBox.innerText = data.message || "Error performing calculations.";
-            alertBox.classList.add("alert-danger");
-            alertBox.style.display = "block";
+            showToast(data.message || "Error performing calculations.", "danger");
         }
     } catch (e) {
-        alertBox.innerText = "Error connecting to billing module.";
-        alertBox.classList.add("alert-danger");
-        alertBox.style.display = "block";
+        showToast("Error connecting to billing module.", "danger");
         console.error(e);
     }
 }
@@ -483,9 +616,7 @@ async function handleGenerateBill() {
         const data = await res.json();
 
         if (res.ok) {
-            alertBox.innerText = data.message || "Invoice saved successfully.";
-            alertBox.classList.add("alert-success");
-            alertBox.style.display = "block";
+            showToast(data.message || "Invoice saved successfully.", "success");
 
             document.getElementById("btn-generate-bill").disabled = true;
             document.getElementById("btn-pay-bill").disabled = false;
@@ -493,14 +624,10 @@ async function handleGenerateBill() {
             // Reload existing invoice information
             checkExistingInvoice(apptNum);
         } else {
-            alertBox.innerText = data.message || "Error saving invoice.";
-            alertBox.classList.add("alert-danger");
-            alertBox.style.display = "block";
+            showToast(data.message || "Error saving invoice.", "danger");
         }
     } catch (e) {
-        alertBox.innerText = "Connection error during bill creation.";
-        alertBox.classList.add("alert-danger");
-        alertBox.style.display = "block";
+        showToast("Connection error during bill creation.", "danger");
         console.error(e);
     }
 }
@@ -524,21 +651,15 @@ async function handlePayBill() {
         const data = await res.json();
 
         if (res.ok) {
-            alertBox.innerText = data.message || "Payment recorded successfully.";
-            alertBox.classList.add("alert-success");
-            alertBox.style.display = "block";
+            showToast(data.message || "Payment recorded successfully.", "success");
 
             document.getElementById("btn-pay-bill").disabled = true;
             checkExistingInvoice(apptNum);
         } else {
-            alertBox.innerText = data.message || "Error processing payment.";
-            alertBox.classList.add("alert-danger");
-            alertBox.style.display = "block";
+            showToast(data.message || "Error processing payment.", "danger");
         }
     } catch (e) {
-        alertBox.innerText = "Connection error during payment processing.";
-        alertBox.classList.add("alert-danger");
-        alertBox.style.display = "block";
+        showToast("Connection error during payment processing.", "danger");
         console.error(e);
     }
 }
@@ -590,19 +711,13 @@ async function triggerNotificationDispatch() {
         const data = await res.json();
 
         if (res.ok) {
-            alertBox.innerText = data.message;
-            alertBox.classList.add("alert-success");
-            alertBox.style.display = "block";
+            showToast(data.message, "success");
             loadNotifications();
         } else {
-            alertBox.innerText = "Error dispatching queue.";
-            alertBox.classList.add("alert-danger");
-            alertBox.style.display = "block";
+            showToast("Error dispatching queue.", "danger");
         }
     } catch (e) {
-        alertBox.innerText = "Connection error.";
-        alertBox.classList.add("alert-danger");
-        alertBox.style.display = "block";
+        showToast("Connection error.", "danger");
         console.error(e);
     }
 }
@@ -696,28 +811,28 @@ async function loadUsers() {
 
         tbody.innerHTML = '';
         if (users.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No users found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No users found.</td></tr>';
             return;
         }
 
-        users.forEach(u => {
+        users.forEach((u, index) => {
             const roleBadge = u.role === "Admin" ? "badge-sent" : "badge-completed";
             const deleteBtn = u.username === "admin" ? 
                 '<span style="font-size:0.75rem; color:var(--text-muted);">Primary Admin</span>' :
-                `<button onclick="handleDeleteUser(${u.id}, '${u.username}')" class="btn btn-danger" style="padding:4px 10px; font-size:0.75rem; width:auto;"><i class="fa-solid fa-trash"></i> Delete</button>`;
+                '<button onclick="handleDeleteUser(' + u.id + ', \'' + u.username + '\')" class="btn btn-danger" style="padding:4px 10px; font-size:0.75rem; width:auto;"><i class="fa-solid fa-trash"></i> Delete</button>';
 
-            tbody.innerHTML += `
-                <tr>
-                    <td>${u.id}</td>
-                    <td style="font-weight:600; color:var(--primary);">${u.username}</td>
-                    <td>${u.fullName}</td>
-                    <td><span class="badge ${roleBadge}">${u.role}</span></td>
-                    <td>${deleteBtn}</td>
-                </tr>
-            `;
+            tbody.innerHTML += 
+                '<tr>' +
+                    '<td style="font-weight:600; color:var(--text-muted);">' + (index + 1) + '</td>' +
+                    '<td style="font-weight:600; color:var(--primary);">' + u.username + '</td>' +
+                    '<td>' + u.fullName + '</td>' +
+                    '<td style="color:var(--text-muted); font-size:0.85rem;">' + (u.email ? u.email : '—') + '</td>' +
+                    '<td><span class="badge ' + roleBadge + '">' + u.role + '</span></td>' +
+                    '<td>' + deleteBtn + '</td>' +
+                '</tr>';
         });
     } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--danger);">Error loading user list.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Error loading user list.</td></tr>';
         console.error(e);
     }
 }
@@ -743,39 +858,102 @@ async function handleCreateUser(event) {
         const data = await res.json();
 
         if (res.ok && data.success) {
-            alertBox.innerText = data.message;
-            alertBox.classList.add("alert-success");
-            alertBox.style.display = "block";
+            showToast(data.message || ("User '" + username + "' created successfully!"), "success");
             document.getElementById("create-user-form").reset();
             loadUsers();
         } else {
-            alertBox.innerText = data.message || "Failed to create user.";
-            alertBox.classList.add("alert-danger");
-            alertBox.style.display = "block";
+            showToast(data.message || "Failed to create user.", "danger");
         }
     } catch (e) {
-        alertBox.innerText = "Error connecting to server.";
-        alertBox.classList.add("alert-danger");
-        alertBox.style.display = "block";
+        showToast("Error connecting to server.", "danger");
         console.error(e);
     }
 }
 
-async function handleDeleteUser(userId, username) {
-    if (!confirm(`Are you sure you want to delete user '${username}'?`)) return;
+function handleDeleteUser(userId, username) {
+    const actionCallback = async function() {
+        try {
+            const res = await fetch("api/users?id=" + userId, { method: "DELETE" });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                showToast("User '" + username + "' deleted successfully.", "success");
+                loadUsers();
+            } else {
+                showToast(data.message || "Failed to delete user.", "danger");
+            }
+        } catch (e) {
+            showToast("Server connection error.", "danger");
+            console.error(e);
+        }
+    };
+
+    if (typeof openDeleteConfirmModal === 'function') {
+        openDeleteConfirmModal(actionCallback, username);
+    } else {
+        if (confirm("Are you sure you want to delete user '" + username + "'?")) {
+            actionCallback();
+        }
+    }
+}
+
+// ==========================================
+// 10. AUDIT LOGS & REPORT EXPORTS
+// ==========================================
+async function loadAuditLogs() {
+    const tbody = document.getElementById("audit-logs-table-body");
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading audit logs...</td></tr>';
 
     try {
-        const res = await fetch(`api/users?id=${userId}`, { method: "DELETE" });
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-            alert("User deleted successfully.");
-            loadUsers();
-        } else {
-            alert(data.message || "Failed to delete user.");
+        const res = await fetch("api/audit-logs");
+        if (res.ok) {
+            const logs = await res.json();
+            tbody.innerHTML = "";
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No audit logs recorded yet.</td></tr>';
+                return;
+            }
+            logs.forEach(log => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = 
+                    '<td><strong>#' + log.id + '</strong></td>' +
+                    '<td style="font-size:0.85rem; color:var(--text-muted);">' + new Date(log.timestamp).toLocaleString() + '</td>' +
+                    '<td><span class="badge" style="background:#e0f2fe; color:#0369a1;">' + log.username + '</span></td>' +
+                    '<td><strong style="color:var(--primary); font-size:0.85rem;">' + log.action + '</strong></td>' +
+                    '<td style="font-size:0.9rem;">' + log.details + '</td>';
+                tbody.appendChild(tr);
+            });
         }
     } catch (e) {
-        alert("Server connection error.");
-        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--danger);">Error loading audit logs.</td></tr>';
+        console.error("Audit log error", e);
     }
+}
+
+function exportTableToCSV(filename, tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    
+    let csv = [];
+    const rows = table.querySelectorAll("tr");
+    
+    for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll("td, th");
+        for (let j = 0; j < cols.length; j++) {
+            let text = cols[j].innerText.replace(/"/g, '""').replace(/\n/g, ' ');
+            row.push('"' + text + '"');
+        }
+        csv.push(row.join(","));
+    }
+
+    const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+    const downloadLink = document.createElement("a");
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    showToast("Exported " + filename + " successfully!", "success");
 }

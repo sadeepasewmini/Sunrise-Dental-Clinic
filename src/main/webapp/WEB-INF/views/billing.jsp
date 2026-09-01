@@ -29,6 +29,11 @@
                 </div>
             </div>
 
+            <div class="form-group" style="margin-top:12px;">
+                <label class="form-label">Custom Dentist Charge / Override (LKR) <small style="color:var(--text-muted); font-weight:normal;">(Optional: Leave blank to use Doctor's default fee)</small></label>
+                <input type="number" name="customDentistFee" class="form-input" value="${bill != null ? bill.consultationFee : ''}" placeholder="e.g. 1000.00" step="50" min="0">
+            </div>
+
             <button type="submit" class="btn btn-primary" style="margin-top:16px;">
                 <i class="fa-solid fa-calculator"></i> Calculate Bill
             </button>

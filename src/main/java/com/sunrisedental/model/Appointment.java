@@ -12,6 +12,7 @@ public class Appointment {
     private String patientContact;
     private int dentistId;
     private int treatmentId;
+    private String toothNumber;
     private Date appointmentDate;
     private Time appointmentTime;
     private String status;
@@ -20,6 +21,8 @@ public class Appointment {
     // Transient fields for easy front-end display
     private String dentistName;
     private String treatmentName;
+    private String allergies;
+    private String medicalConditions;
 
     public Appointment() {}
 
@@ -76,4 +79,13 @@ public class Appointment {
 
     public String getTreatmentName() { return treatmentName; }
     public void setTreatmentName(String treatmentName) { this.treatmentName = treatmentName; }
+
+    public String getToothNumber() { return toothNumber; }
+    public void setToothNumber(String toothNumber) { this.toothNumber = toothNumber; }
+
+    public String getAllergies() { return allergies; }
+    public void setAllergies(String allergies) { this.allergies = allergies; }
+
+    public String getMedicalConditions() { return medicalConditions; }
+    public void setMedicalConditions(String medicalConditions) { this.medicalConditions = medicalConditions; }
 }

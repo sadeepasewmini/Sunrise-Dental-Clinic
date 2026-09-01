@@ -403,16 +403,70 @@
                 <p>Enter your clinic staff credentials to access the management portal.</p>
             </div>
 
+            <!-- Floating Toast Container -->
+            <div id="toast-container" class="toast-container"></div>
+            <script>
+                function showToast(message, type, duration) {
+                    if (!type) type = 'success';
+                    if (!duration) duration = 4500;
+                    if (!message || typeof message !== 'string' || !message.trim()) return;
+
+                    let container = document.getElementById('toast-container');
+                    if (!container) {
+                        container = document.createElement('div');
+                        container.id = 'toast-container';
+                        container.className = 'toast-container';
+                        document.body.appendChild(container);
+                    }
+
+                    const toast = document.createElement('div');
+                    toast.className = 'toast-popup toast-' + type;
+
+                    let iconClass = 'fa-circle-check';
+                    if (type === 'danger' || type === 'error') iconClass = 'fa-triangle-exclamation';
+                    else if (type === 'info') iconClass = 'fa-circle-info';
+
+                    toast.innerHTML = 
+                        '<div class="toast-content">' +
+                            '<i class="fa-solid ' + iconClass + ' toast-icon"></i>' +
+                            '<span>' + message + '</span>' +
+                        '</div>' +
+                        '<button class="toast-close" onclick="dismissToast(this.parentElement)" title="Close">&times;</button>';
+
+                    container.appendChild(toast);
+
+                    if (duration > 0) {
+                        setTimeout(function() {
+                            dismissToast(toast);
+                        }, duration);
+                    }
+                }
+
+                function dismissToast(toast) {
+                    if (!toast || toast.classList.contains('toast-hiding')) return;
+                    toast.classList.add('toast-hiding');
+                    setTimeout(function() {
+                        if (toast && toast.parentElement) {
+                            toast.parentElement.removeChild(toast);
+                        }
+                    }, 300);
+                }
+            </script>
+
             <c:if test="${param.logout == 'true'}">
-                <div class="alert alert-success" style="margin-bottom: 20px; border-radius:12px;">
-                    <i class="fa-solid fa-circle-check"></i> You have logged out successfully.
-                </div>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        showToast("You have logged out successfully.", "success");
+                    });
+                </script>
             </c:if>
 
             <c:if test="${not empty errorMessage}">
-                <div class="alert alert-danger" style="margin-bottom: 20px; border-radius:12px;">
-                    <i class="fa-solid fa-circle-exclamation"></i> ${errorMessage}
-                </div>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        showToast("${errorMessage}", "danger");
+                    });
+                </script>
             </c:if>
 
             <form action="${pageContext.request.contextPath}/login" method="POST" id="loginForm">

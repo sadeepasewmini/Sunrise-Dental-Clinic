@@ -2,9 +2,11 @@ package com.sunrisedental.servlet;
 
 import com.sunrisedental.dao.AppointmentDAO;
 import com.sunrisedental.dao.BillDAO;
+import com.sunrisedental.dao.DentistDAO;
 import com.sunrisedental.dao.TreatmentDAO;
 import com.sunrisedental.model.Appointment;
 import com.sunrisedental.model.Bill;
+import com.sunrisedental.model.Dentist;
 import com.sunrisedental.model.Treatment;
 
 import jakarta.servlet.ServletException;
@@ -19,6 +21,7 @@ public class BillingServlet extends HttpServlet {
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
     private final BillDAO billDAO = new BillDAO();
     private final TreatmentDAO treatmentDAO = new TreatmentDAO();
+    private final DentistDAO dentistDAO = new DentistDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -70,7 +73,9 @@ public class BillingServlet extends HttpServlet {
         String strategyType = request.getParameter("billingStrategy");
         double manualDiscount = 0.0;
         try {
-            manualDiscount = Double.parseDouble(request.getParameter("manualDiscount"));
+            if (request.getParameter("manualDiscount") != null) {
+                manualDiscount = Double.parseDouble(request.getParameter("manualDiscount"));
+            }
         } catch (Exception ignored) {}
 
         Appointment appt = appointmentDAO.getAppointmentByNumber(apptNumber != null ? apptNumber.trim() : "");
@@ -82,8 +87,10 @@ public class BillingServlet extends HttpServlet {
         }
 
         Treatment treatment = treatmentDAO.getTreatmentById(appt.getTreatmentId());
+        Dentist dentist = dentistDAO.getDentistById(appt.getDentistId());
+        
         double treatmentCost = (treatment != null) ? treatment.getCost() : 3000.0;
-        double consultationFee = 1500.0;
+        double consultationFee = (dentist != null) ? dentist.getConsultationFee() : 1000.0;
         double baseFee = treatmentCost + consultationFee;
 
         double strategyDiscountRate = 0.0;
@@ -94,7 +101,7 @@ public class BillingServlet extends HttpServlet {
         }
 
         double totalDiscount = (baseFee * strategyDiscountRate) + manualDiscount;
-        double netCost = Math.max(0, baseFee - totalDiscount);
+        double netCost = Math.max(0.0, baseFee - totalDiscount);
 
         Bill bill = new Bill();
         bill.setAppointmentNumber(appt.getAppointmentNumber());

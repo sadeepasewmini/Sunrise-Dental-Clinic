@@ -35,8 +35,8 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        // Restrict /users endpoint to Admin role only
-        if (path.startsWith("/users") && !"Admin".equalsIgnoreCase(currentUser.getRole())) {
+        // Restrict /users and /dentists endpoints to Admin role only
+        if ((path.startsWith("/users") || path.startsWith("/dentists")) && !"Admin".equalsIgnoreCase(currentUser.getRole())) {
             request.setAttribute("errorMessage", "Access Denied: Admin privileges required.");
             request.getRequestDispatcher("/WEB-INF/views/dashboard.jsp").forward(request, response);
             return;

@@ -23,6 +23,10 @@ public class LoginServlet extends HttpServlet {
         if ("/logout".equals(path)) {
             HttpSession session = request.getSession(false);
             if (session != null) {
+                User current = (User) session.getAttribute("currentUser");
+                if (current != null) {
+                    new com.sunrisedental.dao.AuditDAO().logAction(current.getUsername(), "USER_LOGOUT", "User logged out");
+                }
                 session.invalidate();
             }
             response.sendRedirect(request.getContextPath() + "/login?logout=true");
@@ -56,6 +60,8 @@ public class LoginServlet extends HttpServlet {
         if (user != null) {
             HttpSession session = request.getSession(true);
             session.setAttribute("currentUser", user);
+            session.setAttribute("successMessage", "Welcome back, " + user.getFullName() + "! Login successful.");
+            new com.sunrisedental.dao.AuditDAO().logAction(user.getUsername(), "USER_LOGIN", "Successful login to dashboard");
             response.sendRedirect(request.getContextPath() + "/dashboard");
         } else {
             request.setAttribute("errorMessage", "Invalid username or password. Please try again.");

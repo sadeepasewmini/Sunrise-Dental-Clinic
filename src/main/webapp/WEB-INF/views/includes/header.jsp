@@ -52,6 +52,9 @@
             </a>
             
             <c:if test="${currentUser.role == 'Admin'}">
+                <a href="${pageContext.request.contextPath}/dentists" class="nav-item ${activeMenu == 'dentists' ? 'active' : ''}">
+                    <i class="fa-solid fa-user-doctor"></i> Dentists / Doctors
+                </a>
                 <a href="${pageContext.request.contextPath}/notifications" class="nav-item ${activeMenu == 'notifications' ? 'active' : ''}">
                     <i class="fa-solid fa-bell"></i> Alerts &amp; Logs
                 </a>
@@ -84,22 +87,153 @@
             </div>
         </header>
 
-        <c:if test="${not empty sessionScope.successMessage}">
-            <div class="alert alert-success" style="margin-bottom:16px;">
-                <i class="fa-solid fa-circle-check"></i> ${sessionScope.successMessage}
+        <!-- Floating Toast Notification Container -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- Custom Delete Confirmation Modal -->
+        <div id="confirmModalOverlay" class="custom-modal-overlay">
+            <div class="custom-modal-card">
+                <div class="custom-modal-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="custom-modal-title">Confirm User Deletion</div>
+                <div class="custom-modal-body" id="confirmModalBody">
+                    Are you sure you want to delete this user account? This action cannot be undone.
+                </div>
+                <div class="custom-modal-actions">
+                    <button type="button" class="custom-modal-btn custom-modal-btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+                    <button type="button" id="confirmModalDeleteBtn" class="custom-modal-btn custom-modal-btn-confirm"><i class="fa-solid fa-trash"></i> Yes, Delete User</button>
+                </div>
             </div>
+        </div>
+
+        <script>
+            let activeDeleteAction = null;
+
+            function openDeleteConfirmModal(target, username) {
+                if (typeof target === 'function') {
+                    activeDeleteAction = target;
+                } else if (typeof target === 'string') {
+                    activeDeleteAction = function() {
+                        const form = document.getElementById(target);
+                        if (form) form.submit();
+                    };
+                } else {
+                    activeDeleteAction = null;
+                }
+
+                const bodyEl = document.getElementById('confirmModalBody');
+                if (bodyEl) {
+                    bodyEl.innerHTML = 'Are you sure you want to delete user <strong>' + (username || 'this user') + '</strong>? This action cannot be undone.';
+                }
+                const overlay = document.getElementById('confirmModalOverlay');
+                if (overlay) {
+                    overlay.classList.add('active');
+                }
+            }
+
+            function closeConfirmModal() {
+                const overlay = document.getElementById('confirmModalOverlay');
+                if (overlay) {
+                    overlay.classList.remove('active');
+                }
+                activeDeleteAction = null;
+            }
+
+            document.addEventListener("DOMContentLoaded", function() {
+                const confirmBtn = document.getElementById('confirmModalDeleteBtn');
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', function() {
+                        if (typeof activeDeleteAction === 'function') {
+                            activeDeleteAction();
+                        }
+                        closeConfirmModal();
+                    });
+                }
+            });
+        </script>
+
+        <script>
+            function showToast(message, type, duration) {
+                if (!type) type = 'success';
+                if (!duration) duration = 4500;
+                if (!message || typeof message !== 'string' || !message.trim()) return;
+
+                let container = document.getElementById('toast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'toast-container';
+                    container.className = 'toast-container';
+                    document.body.appendChild(container);
+                }
+
+                const toast = document.createElement('div');
+                toast.className = 'toast-popup toast-' + type;
+
+                let iconClass = 'fa-circle-check';
+                if (type === 'danger' || type === 'error') iconClass = 'fa-triangle-exclamation';
+                else if (type === 'info') iconClass = 'fa-circle-info';
+
+                toast.innerHTML = 
+                    '<div class="toast-content">' +
+                        '<i class="fa-solid ' + iconClass + ' toast-icon"></i>' +
+                        '<span>' + message + '</span>' +
+                    '</div>' +
+                    '<button class="toast-close" onclick="dismissToast(this.parentElement)" title="Close">&times;</button>';
+
+                container.appendChild(toast);
+
+                if (duration > 0) {
+                    setTimeout(function() {
+                        dismissToast(toast);
+                    }, duration);
+                }
+            }
+
+            function dismissToast(toast) {
+                if (!toast || toast.classList.contains('toast-hiding')) return;
+                toast.classList.add('toast-hiding');
+                setTimeout(function() {
+                    if (toast && toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
+                }, 300);
+            }
+        </script>
+
+        <c:if test="${not empty sessionScope.successMessage}">
+            <script>
+                window.addEventListener("DOMContentLoaded", function() {
+                    showToast("${sessionScope.successMessage}", "success");
+                });
+            </script>
             <c:remove var="successMessage" scope="session" />
         </c:if>
 
         <c:if test="${not empty sessionScope.errorMessage}">
-            <div class="alert alert-danger" style="margin-bottom:16px;">
-                <i class="fa-solid fa-triangle-exclamation"></i> ${sessionScope.errorMessage}
-            </div>
+            <script>
+                window.addEventListener("DOMContentLoaded", function() {
+                    showToast("${sessionScope.errorMessage}", "danger");
+                });
+            </script>
             <c:remove var="errorMessage" scope="session" />
         </c:if>
 
         <c:if test="${not empty errorMessage}">
-            <div class="alert alert-danger" style="margin-bottom:16px;">
-                <i class="fa-solid fa-triangle-exclamation"></i> ${errorMessage}
-            </div>
+            <script>
+                window.addEventListener("DOMContentLoaded", function() {
+                    showToast("${errorMessage}", "danger");
+                });
+            </script>
         </c:if>
+
+        <c:if test="${not empty sessionScope.infoMessage}">
+            <script>
+                window.addEventListener("DOMContentLoaded", function() {
+                    showToast("${sessionScope.infoMessage}", "info");
+                });
+            </script>
+            <c:remove var="infoMessage" scope="session" />
+        </c:if>
+
+

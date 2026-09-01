@@ -97,22 +97,32 @@
                                 </span>
                             </td>
                             <td>
-                                <c:if test="${a.status == 'Pending'}">
-                                    <form action="${pageContext.request.contextPath}/appointments" method="POST" style="display:inline;">
-                                        <input type="hidden" name="action" value="updateStatus">
-                                        <input type="hidden" name="id" value="${a.id}">
-                                        <input type="hidden" name="status" value="Completed">
-                                        <input type="hidden" name="redirectUrl" value="${pageContext.request.contextPath}/dashboard">
-                                        <button type="submit" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem; width:auto;">Complete</button>
-                                    </form>
-                                    <form action="${pageContext.request.contextPath}/appointments" method="POST" style="display:inline;">
-                                        <input type="hidden" name="action" value="updateStatus">
-                                        <input type="hidden" name="id" value="${a.id}">
-                                        <input type="hidden" name="status" value="Cancelled">
-                                        <input type="hidden" name="redirectUrl" value="${pageContext.request.contextPath}/dashboard">
-                                        <button type="submit" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem; width:auto; background:var(--danger); border-color:var(--danger); color:#fff;">Cancel</button>
-                                    </form>
-                                </c:if>
+                                <c:choose>
+                                    <c:when test="${a.status == 'Pending'}">
+                                        <form action="${pageContext.request.contextPath}/appointments" method="POST" style="display:inline;">
+                                            <input type="hidden" name="action" value="updateStatus">
+                                            <input type="hidden" name="id" value="${a.id}">
+                                            <input type="hidden" name="status" value="Completed">
+                                            <input type="hidden" name="redirectUrl" value="${pageContext.request.contextPath}/dashboard">
+                                            <button type="submit" class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem; width:auto;">Complete</button>
+                                        </form>
+                                        <form action="${pageContext.request.contextPath}/appointments" method="POST" style="display:inline;">
+                                            <input type="hidden" name="action" value="updateStatus">
+                                            <input type="hidden" name="id" value="${a.id}">
+                                            <input type="hidden" name="status" value="Cancelled">
+                                            <input type="hidden" name="redirectUrl" value="${pageContext.request.contextPath}/dashboard">
+                                            <button type="submit" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem; width:auto; background:var(--danger); border-color:var(--danger); color:#fff;">Cancel</button>
+                                        </form>
+                                    </c:when>
+                                    <c:when test="${a.status == 'Completed'}">
+                                        <a href="${pageContext.request.contextPath}/billing?action=print&number=${a.appointmentNumber}" class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem; width:auto; text-decoration:none; display:inline-flex; align-items:center; gap:4px; background:var(--primary-dark); color:#fff;">
+                                            <i class="fa-solid fa-print"></i> Receipt
+                                        </a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span style="color:var(--text-muted); font-size:0.8rem; font-style:italic;">No action</span>
+                                    </c:otherwise>
+                                </c:choose>
                             </td>
                         </tr>
                     </c:forEach>

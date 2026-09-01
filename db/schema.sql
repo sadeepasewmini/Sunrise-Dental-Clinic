@@ -3,6 +3,7 @@
 
 CREATE DATABASE IF NOT EXISTS sunrise_dental_db;
 USE sunrise_dental_db;
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- 1. Users Table (Authentication)
 DROP TABLE IF EXISTS users;
@@ -24,6 +25,8 @@ CREATE TABLE patients (
     address VARCHAR(200) NOT NULL,
     contact_number VARCHAR(15) NOT NULL,
     email VARCHAR(100),
+    allergies VARCHAR(255) DEFAULT 'None',
+    medical_conditions VARCHAR(255) DEFAULT 'None',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -55,6 +58,7 @@ CREATE TABLE appointments (
     patient_contact VARCHAR(15) NOT NULL,
     dentist_id INT NOT NULL,
     treatment_id INT NOT NULL,
+    tooth_number VARCHAR(10) DEFAULT 'General',
     appointment_date DATE NOT NULL,
     appointment_time TIME NOT NULL,
     status VARCHAR(20) DEFAULT 'Pending', -- 'Pending', 'Completed', 'Cancelled'
@@ -90,6 +94,16 @@ CREATE TABLE notifications (
     status VARCHAR(20) DEFAULT 'Pending', -- 'Pending', 'Sent', 'Failed'
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (appointment_number) REFERENCES appointments(appointment_number) ON DELETE CASCADE
+);
+
+-- 7. Audit Logs Table (System Activity Trail)
+DROP TABLE IF EXISTS audit_logs;
+CREATE TABLE audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    action VARCHAR(100) NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =========================================================================
@@ -226,3 +240,6 @@ INSERT INTO treatments (name, cost) VALUES
 ('Root Canal Treatment', 15000.00),
 ('Dental Braces Installation', 80000.00),
 ('Teeth Whitening', 12000.00);
+
+SET FOREIGN_KEY_CHECKS = 1;
+

@@ -88,6 +88,9 @@ public class AppointmentServlet extends HttpServlet {
             int treatmentId = Integer.parseInt(request.getParameter("treatmentId"));
             String dateStr = request.getParameter("appointmentDate");
             String timeStr = request.getParameter("appointmentTime");
+            String toothNumber = request.getParameter("toothNumber");
+            String allergies = request.getParameter("allergies");
+            String medicalConditions = request.getParameter("medicalConditions");
 
             if (timeStr != null && timeStr.length() == 5) {
                 timeStr += ":00";
@@ -97,7 +100,10 @@ public class AppointmentServlet extends HttpServlet {
             com.sunrisedental.dao.PatientDAO patientDAO = new com.sunrisedental.dao.PatientDAO();
             com.sunrisedental.model.Patient existingPatient = patientDAO.getPatientByContact(contact);
             if (existingPatient == null) {
-                com.sunrisedental.model.Patient newPatient = new com.sunrisedental.model.Patient(0, name, address, contact, "", null);
+                com.sunrisedental.model.Patient newPatient = new com.sunrisedental.model.Patient(0, name, address, contact, "", 
+                    allergies != null && !allergies.trim().isEmpty() ? allergies.trim() : "None", 
+                    medicalConditions != null && !medicalConditions.trim().isEmpty() ? medicalConditions.trim() : "None", 
+                    null);
                 patientDAO.addPatient(newPatient);
             }
             // ------------------------------------
@@ -108,6 +114,7 @@ public class AppointmentServlet extends HttpServlet {
             appt.setPatientContact(contact);
             appt.setDentistId(dentistId);
             appt.setTreatmentId(treatmentId);
+            appt.setToothNumber(toothNumber != null && !toothNumber.trim().isEmpty() ? toothNumber.trim() : "General");
             appt.setAppointmentDate(Date.valueOf(dateStr));
             appt.setAppointmentTime(Time.valueOf(timeStr));
             appt.setStatus("Pending");

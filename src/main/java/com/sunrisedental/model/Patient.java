@@ -8,16 +8,20 @@ public class Patient {
     private String address;
     private String contactNumber;
     private String email;
+    private String allergies;
+    private String medicalConditions;
     private Timestamp createdAt;
 
     public Patient() {}
 
-    public Patient(int id, String name, String address, String contactNumber, String email, Timestamp createdAt) {
+    public Patient(int id, String name, String address, String contactNumber, String email, String allergies, String medicalConditions, Timestamp createdAt) {
         this.id = id;
         this.name = name;
         this.address = address;
         this.contactNumber = contactNumber;
         this.email = email;
+        this.allergies = allergies;
+        this.medicalConditions = medicalConditions;
         this.createdAt = createdAt;
     }
 
@@ -35,6 +39,12 @@ public class Patient {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getAllergies() { return allergies; }
+    public void setAllergies(String allergies) { this.allergies = allergies; }
+
+    public String getMedicalConditions() { return medicalConditions; }
+    public void setMedicalConditions(String medicalConditions) { this.medicalConditions = medicalConditions; }
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }

@@ -56,4 +56,35 @@ public class DentistDAO {
         }
         return null;
     }
+
+    public boolean addDentist(Dentist dentist) {
+        String sql = "INSERT INTO dentists (name, specialization, contact_number, consultation_fee) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, dentist.getName());
+            pstmt.setString(2, dentist.getSpecialization());
+            pstmt.setString(3, dentist.getContactNumber());
+            pstmt.setDouble(4, dentist.getConsultationFee());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error adding dentist: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean deleteDentist(int id) {
+        String sql = "DELETE FROM dentists WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, id);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error deleting dentist: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

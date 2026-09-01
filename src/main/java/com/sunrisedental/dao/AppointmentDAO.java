@@ -16,7 +16,7 @@ public class AppointmentDAO {
      * Throws SQLException if double booking or database error occurs.
      */
     public String createAppointment(Appointment appt) throws SQLException {
-        String sql = "INSERT INTO appointments (appointment_number, patient_name, patient_address, patient_contact, dentist_id, treatment_id, appointment_date, appointment_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO appointments (appointment_number, patient_name, patient_address, patient_contact, dentist_id, treatment_id, tooth_number, appointment_date, appointment_time, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -30,9 +30,10 @@ public class AppointmentDAO {
                     pstmt.setString(4, appt.getPatientContact());
                     pstmt.setInt(5, appt.getDentistId());
                     pstmt.setInt(6, appt.getTreatmentId());
-                    pstmt.setDate(7, appt.getAppointmentDate());
-                    pstmt.setTime(8, appt.getAppointmentTime());
-                    pstmt.setString(9, "Pending");
+                    pstmt.setString(7, appt.getToothNumber() != null ? appt.getToothNumber() : "General");
+                    pstmt.setDate(8, appt.getAppointmentDate());
+                    pstmt.setTime(9, appt.getAppointmentTime());
+                    pstmt.setString(10, "Pending");
                     
                     pstmt.executeUpdate();
                 }
@@ -59,10 +60,11 @@ public class AppointmentDAO {
 
     public List<Appointment> getAllAppointments() {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT a.*, d.name AS dentist_name, t.name AS treatment_name " +
+        String sql = "SELECT a.*, d.name AS dentist_name, t.name AS treatment_name, p.allergies, p.medical_conditions " +
                      "FROM appointments a " +
                      "JOIN dentists d ON a.dentist_id = d.id " +
                      "JOIN treatments t ON a.treatment_id = t.id " +
+                     "LEFT JOIN patients p ON a.patient_contact = p.contact_number " +
                      "ORDER BY a.appointment_date DESC, a.appointment_time DESC";
                      
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -78,12 +80,15 @@ public class AppointmentDAO {
                 a.setPatientContact(rs.getString("patient_contact"));
                 a.setDentistId(rs.getInt("dentist_id"));
                 a.setTreatmentId(rs.getInt("treatment_id"));
+                a.setToothNumber(rs.getString("tooth_number"));
                 a.setAppointmentDate(rs.getDate("appointment_date"));
                 a.setAppointmentTime(rs.getTime("appointment_time"));
                 a.setStatus(rs.getString("status"));
                 a.setCreatedAt(rs.getTimestamp("created_at"));
                 a.setDentistName(rs.getString("dentist_name"));
                 a.setTreatmentName(rs.getString("treatment_name"));
+                a.setAllergies(rs.getString("allergies"));
+                a.setMedicalConditions(rs.getString("medical_conditions"));
                 list.add(a);
             }
         } catch (SQLException e) {
@@ -94,10 +99,11 @@ public class AppointmentDAO {
     }
 
     public Appointment getAppointmentByNumber(String apptNum) {
-        String sql = "SELECT a.*, d.name AS dentist_name, t.name AS treatment_name " +
+        String sql = "SELECT a.*, d.name AS dentist_name, t.name AS treatment_name, p.allergies, p.medical_conditions " +
                      "FROM appointments a " +
                      "JOIN dentists d ON a.dentist_id = d.id " +
                      "JOIN treatments t ON a.treatment_id = t.id " +
+                     "LEFT JOIN patients p ON a.patient_contact = p.contact_number " +
                      "WHERE a.appointment_number = ?";
                      
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -114,12 +120,15 @@ public class AppointmentDAO {
                     a.setPatientContact(rs.getString("patient_contact"));
                     a.setDentistId(rs.getInt("dentist_id"));
                     a.setTreatmentId(rs.getInt("treatment_id"));
+                    a.setToothNumber(rs.getString("tooth_number"));
                     a.setAppointmentDate(rs.getDate("appointment_date"));
                     a.setAppointmentTime(rs.getTime("appointment_time"));
                     a.setStatus(rs.getString("status"));
                     a.setCreatedAt(rs.getTimestamp("created_at"));
                     a.setDentistName(rs.getString("dentist_name"));
                     a.setTreatmentName(rs.getString("treatment_name"));
+                    a.setAllergies(rs.getString("allergies"));
+                    a.setMedicalConditions(rs.getString("medical_conditions"));
                     return a;
                 }
             }
@@ -137,10 +146,11 @@ public class AppointmentDAO {
      */
     public List<Appointment> searchAppointments(String query) {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT a.*, d.name AS dentist_name, t.name AS treatment_name " +
+        String sql = "SELECT a.*, d.name AS dentist_name, t.name AS treatment_name, p.allergies, p.medical_conditions " +
                      "FROM appointments a " +
                      "JOIN dentists d ON a.dentist_id = d.id " +
                      "JOIN treatments t ON a.treatment_id = t.id " +
+                     "LEFT JOIN patients p ON a.patient_contact = p.contact_number " +
                      "WHERE LOWER(a.appointment_number) LIKE ? " +
                      "OR LOWER(a.patient_name) LIKE ? " +
                      "OR a.patient_contact LIKE ? " +
@@ -164,12 +174,15 @@ public class AppointmentDAO {
                     a.setPatientContact(rs.getString("patient_contact"));
                     a.setDentistId(rs.getInt("dentist_id"));
                     a.setTreatmentId(rs.getInt("treatment_id"));
+                    a.setToothNumber(rs.getString("tooth_number"));
                     a.setAppointmentDate(rs.getDate("appointment_date"));
                     a.setAppointmentTime(rs.getTime("appointment_time"));
                     a.setStatus(rs.getString("status"));
                     a.setCreatedAt(rs.getTimestamp("created_at"));
                     a.setDentistName(rs.getString("dentist_name"));
                     a.setTreatmentName(rs.getString("treatment_name"));
+                    a.setAllergies(rs.getString("allergies"));
+                    a.setMedicalConditions(rs.getString("medical_conditions"));
                     list.add(a);
                 }
             }

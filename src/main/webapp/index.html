@@ -99,6 +99,9 @@
             <li id="menu-item-users"><div class="menu-item" onclick="switchSection('users')">
                 <i class="fa-solid fa-users-gear"></i> User Management
             </div></li>
+            <li id="menu-item-audit"><div class="menu-item" onclick="switchSection('audit')">
+                <i class="fa-solid fa-shield-halved"></i> Audit Trail
+            </div></li>
             <li><div class="menu-item" onclick="switchSection('help')">
                 <i class="fa-solid fa-circle-question"></i> Help Guide
             </div></li>
@@ -193,8 +196,12 @@
                 <form id="register-form" onsubmit="handleRegisterAppointment(event)">
                     <div class="grid-2">
                         <div class="form-group">
-                            <label class="form-label">Patient Full Name</label>
-                            <input type="text" id="appt-patientName" class="form-input" placeholder="e.g. Nimal Perera" required>
+                            <label class="form-label">Patient Full Name (Type to search registered patients)</label>
+                            <input type="text" id="appt-patientName" class="form-input" placeholder="e.g. Nimal Perera" list="spaPatientsDatalist" autocomplete="off" required>
+                            <datalist id="spaPatientsDatalist"></datalist>
+                            <div id="spaAutoFillBadge" style="display:none; font-size:0.78rem; color:#059669; background:#d1fae5; border:1px solid #a7f3d0; padding:4px 10px; border-radius:6px; margin-top:4px; font-weight:600;">
+                                <i class="fa-solid fa-circle-check"></i> Patient details auto-filled!
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Contact Number</label>
@@ -204,6 +211,16 @@
                     <div class="form-group">
                         <label class="form-label">Patient Home Address</label>
                         <input type="text" id="appt-patientAddress" class="form-input" placeholder="Street, City" required>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Known Allergies (Optional)</label>
+                            <input type="text" id="appt-allergies" class="form-input" placeholder="e.g. Penicillin, Latex, None">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Medical Conditions (Optional)</label>
+                            <input type="text" id="appt-medicalConditions" class="form-input" placeholder="e.g. Diabetes, High BP, None">
+                        </div>
                     </div>
                     <div class="grid-2">
                         <div class="form-group">
@@ -229,6 +246,54 @@
                             <input type="time" id="appt-appointmentTime" class="form-input" required>
                         </div>
                     </div>
+
+                    <!-- Visual Dental Chart (32 Teeth Selector) -->
+                    <div class="form-group" style="margin-top:12px;">
+                        <label class="form-label"><i class="fa-solid fa-tooth" style="color:var(--primary);"></i> Visual Dental Chart (Select Affected Tooth Number 1 - 32)</label>
+                        <div class="teeth-chart-container">
+                            <div class="jaw-label"><i class="fa-solid fa-angle-up"></i> Upper Arch (Maxillary Teeth 1 - 16):</div>
+                            <div class="teeth-row">
+                                <button type="button" class="tooth-btn" onclick="selectTooth('1')">1</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('2')">2</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('3')">3</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('4')">4</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('5')">5</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('6')">6</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('7')">7</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('8')">8</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('9')">9</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('10')">10</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('11')">11</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('12')">12</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('13')">13</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('14')">14</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('15')">15</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('16')">16</button>
+                            </div>
+                            <div class="jaw-label" style="margin-top:10px;"><i class="fa-solid fa-angle-down"></i> Lower Arch (Mandibular Teeth 17 - 32):</div>
+                            <div class="teeth-row">
+                                <button type="button" class="tooth-btn" onclick="selectTooth('17')">17</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('18')">18</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('19')">19</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('20')">20</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('21')">21</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('22')">22</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('23')">23</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('24')">24</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('25')">25</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('26')">26</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('27')">27</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('28')">28</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('29')">29</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('30')">30</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('31')">31</button>
+                                <button type="button" class="tooth-btn" onclick="selectTooth('32')">32</button>
+                            </div>
+                            <input type="hidden" id="appt-toothNumber" value="General">
+                            <div style="margin-top:8px; font-size:0.85rem; color:var(--primary); font-weight:600;" id="selected-tooth-display">Selected Tooth: General (Whole Mouth / Consultation)</div>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary" style="width:auto; min-width:200px; margin-top:8px;">
                         <i class="fa-solid fa-check"></i> Register Appointment
                     </button>
@@ -252,9 +317,14 @@
 
             <!-- Search Results Table Card (when multiple results match) -->
             <div id="search-results-table-card" class="content-card" style="display:none;">
-                <div class="card-title"><i class="fa-solid fa-list-check"></i> Matching Appointments</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div class="card-title" style="margin-bottom:0;"><i class="fa-solid fa-list-check"></i> Matching Appointments</div>
+                    <button onclick="exportTableToCSV('appointments_export.csv', 'search-appointments-table')" class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:0.8rem;">
+                        <i class="fa-solid fa-file-csv"></i> Export CSV
+                    </button>
+                </div>
                 <div class="table-container">
-                    <table class="table-glass">
+                    <table class="table-glass" id="search-appointments-table">
                         <thead>
                             <tr>
                                 <th>Appt No</th>
@@ -281,10 +351,15 @@
                         <p style="margin-top:14px;"><span style="color:var(--text-muted); font-size:0.83rem; font-weight:600;">PATIENT NAME</span><br><span id="view-patient-name"></span></p>
                         <p><span style="color:var(--text-muted); font-size:0.83rem; font-weight:600;">CONTACT</span><br><span id="view-patient-contact"></span></p>
                         <p><span style="color:var(--text-muted); font-size:0.83rem; font-weight:600;">ADDRESS</span><br><span id="view-patient-address"></span></p>
+                        <p style="margin-top:6px;"><span style="color:var(--text-muted); font-size:0.83rem; font-weight:600;">MEDICAL HISTORY &amp; ALLERGIES</span><br>
+                            <span id="view-patient-allergies" class="badge badge-cancelled" style="margin-top:2px;">Allergies: None</span>
+                            <span id="view-patient-conditions" class="badge badge-pending" style="margin-top:2px;">Conditions: None</span>
+                        </p>
                     </div>
                     <div>
                         <p><span style="color:var(--text-muted); font-size:0.83rem; font-weight:600;">DENTIST</span><br><span id="view-dentist-name"></span></p>
                         <p><span style="color:var(--text-muted); font-size:0.83rem; font-weight:600;">TREATMENT</span><br><span id="view-treatment-name"></span></p>
+                        <p><span style="color:var(--text-muted); font-size:0.83rem; font-weight:600;">TOOTH NUMBER / SITE</span><br><strong id="view-tooth-number" style="color:var(--primary);">General</strong></p>
                         <p><span style="color:var(--text-muted); font-size:0.83rem; font-weight:600;">DATE &amp; TIME</span><br><span id="view-appt-date"></span> at <span id="view-appt-time"></span></p>
                         <p><span style="color:var(--text-muted); font-size:0.83rem; font-weight:600;">STATUS</span><br><span id="view-appt-status" class="badge"></span></p>
                     </div>
@@ -467,7 +542,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Email Address</label>
-                                <input type="email" id="user-email" class="form-input" placeholder="kasun@sunrisedental.lk">
+                                <input type="email" id="user-email" class="form-input" placeholder="kasun@sunrisedental.lk" required>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary" style="margin-top:8px;">
@@ -478,7 +553,12 @@
 
                 <!-- User Table -->
                 <div class="content-card">
-                    <div class="card-title"><i class="fa-solid fa-users"></i> Registered System Accounts</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <div class="card-title" style="margin-bottom:0;"><i class="fa-solid fa-users"></i> Registered System Accounts</div>
+                        <button onclick="exportTableToCSV('users_export.csv', 'users-table')" class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:0.8rem;">
+                            <i class="fa-solid fa-file-csv"></i> Export CSV
+                        </button>
+                    </div>
                     <div class="table-container">
                         <table class="table-glass" id="users-table">
                             <thead>
@@ -486,15 +566,52 @@
                                     <th>ID</th>
                                     <th>Username</th>
                                     <th>Full Name</th>
+                                    <th>Email</th>
                                     <th>Role</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="users-table-body">
-                                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading users...</td></tr>
+                                <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Loading users...</td></tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- H. AUDIT TRAIL & SYSTEM LOGS -->
+        <section id="section-audit" class="page-section">
+            <div class="content-card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="card-title" style="margin-bottom:0;"><i class="fa-solid fa-shield-halved"></i> System Activity Audit Trail</div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="exportTableToCSV('audit_logs_export.csv', 'audit-logs-table')" class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:0.8rem;">
+                            <i class="fa-solid fa-file-csv"></i> Export CSV
+                        </button>
+                        <button onclick="loadAuditLogs()" class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:0.8rem;">
+                            <i class="fa-solid fa-rotate"></i> Refresh Logs
+                        </button>
+                    </div>
+                </div>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-top:6px; margin-bottom:16px;">
+                    Tracks real-time system actions, authentication events, appointment creations, billing operations, and user changes for audit compliance.
+                </p>
+                <div class="table-container">
+                    <table class="table-glass" id="audit-logs-table">
+                        <thead>
+                            <tr>
+                                <th>Log ID</th>
+                                <th>Timestamp</th>
+                                <th>Username</th>
+                                <th>Action Type</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-logs-table-body">
+                            <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading audit logs...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>

@@ -49,9 +49,14 @@ public class PatientServlet extends HttpServlet {
             String name = request.getParameter("name");
             String address = request.getParameter("address");
             String contactNumber = request.getParameter("contactNumber");
-            String email = request.getParameter("email"); // Can be empty
+            String email = request.getParameter("email");
+            String allergies = request.getParameter("allergies");
+            String medicalConditions = request.getParameter("medicalConditions");
 
-            Patient patient = new Patient(0, name, address, contactNumber, email, null);
+            Patient patient = new Patient(0, name, address, contactNumber, email, 
+                allergies != null && !allergies.trim().isEmpty() ? allergies.trim() : "None", 
+                medicalConditions != null && !medicalConditions.trim().isEmpty() ? medicalConditions.trim() : "None", 
+                null);
 
             if (patientDAO.addPatient(patient)) {
                 request.getSession().setAttribute("successMessage", "Patient registered successfully.");
