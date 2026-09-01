@@ -74,6 +74,24 @@ public class DentistDAO {
         return false;
     }
 
+    public boolean updateDentist(Dentist dentist) {
+        String sql = "UPDATE dentists SET name = ?, specialization = ?, contact_number = ?, consultation_fee = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, dentist.getName());
+            pstmt.setString(2, dentist.getSpecialization());
+            pstmt.setString(3, dentist.getContactNumber());
+            pstmt.setDouble(4, dentist.getConsultationFee());
+            pstmt.setInt(5, dentist.getId());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating dentist: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean deleteDentist(int id) {
         String sql = "DELETE FROM dentists WHERE id = ?";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
