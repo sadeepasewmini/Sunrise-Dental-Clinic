@@ -88,20 +88,22 @@
                                 LKR <fmt:formatNumber value="${d.consultationFee}" pattern="#,##0.00"/>
                             </td>
                             <td style="text-align:center; white-space:nowrap;">
-                                <button type="button" class="btn btn-secondary edit-dentist-btn" 
+                                <button type="button" class="btn btn-secondary" 
                                         style="padding:6px 14px; font-size:0.8rem; background:var(--primary); border-color:var(--primary); color:#fff; border-radius:8px; margin-right:4px;"
                                         data-id="${d.id}"
                                         data-name="<c:out value='${d.name}'/>"
                                         data-specialization="<c:out value='${d.specialization}'/>"
                                         data-contact="<c:out value='${d.contactNumber}'/>"
-                                        data-fee="${d.consultationFee}">
+                                        data-fee="${d.consultationFee}"
+                                        onclick="openEditDentistModalFromBtn(this)">
                                     <i class="fa-solid fa-pen-to-square"></i> Edit
                                 </button>
 
-                                <button type="button" class="btn btn-secondary delete-dentist-btn" 
+                                <button type="button" class="btn btn-secondary" 
                                         style="padding:6px 14px; font-size:0.8rem; background:var(--danger); border-color:var(--danger); color:#fff; border-radius:8px;"
                                         data-id="${d.id}"
-                                        data-name="<c:out value='${d.name}'/>">
+                                        data-name="<c:out value='${d.name}'/>"
+                                        onclick="confirmDeleteDentistFromBtn(this)">
                                     <i class="fa-solid fa-trash"></i> Remove
                                 </button>
                             </td>
@@ -207,12 +209,18 @@
 </div>
 
 <script>
-function openEditDentistModal(id, name, specialization, contactNumber, consultationFee) {
+function openEditDentistModalFromBtn(btn) {
+    var id = btn.getAttribute('data-id');
+    var name = btn.getAttribute('data-name');
+    var spec = btn.getAttribute('data-specialization');
+    var contact = btn.getAttribute('data-contact');
+    var fee = btn.getAttribute('data-fee');
+
     document.getElementById('editDentistId').value = id;
     document.getElementById('editDentistName').value = name;
-    document.getElementById('editSpecialization').value = specialization;
-    document.getElementById('editContactNumber').value = contactNumber || '';
-    document.getElementById('editConsultationFee').value = consultationFee;
+    document.getElementById('editSpecialization').value = spec;
+    document.getElementById('editContactNumber').value = contact || '';
+    document.getElementById('editConsultationFee').value = fee;
 
     document.getElementById('editDentistModal').style.display = 'flex';
 }
@@ -221,7 +229,10 @@ function closeEditDentistModal() {
     document.getElementById('editDentistModal').style.display = 'none';
 }
 
-function confirmDeleteDentist(id, name) {
+function confirmDeleteDentistFromBtn(btn) {
+    var id = btn.getAttribute('data-id');
+    var name = btn.getAttribute('data-name');
+
     document.getElementById('deleteDentistId').value = id;
     document.getElementById('deleteDentistName').textContent = name;
     document.getElementById('deleteDentistModal').style.display = 'flex';
@@ -231,32 +242,12 @@ function closeDeleteDentistModal() {
     document.getElementById('deleteDentistModal').style.display = 'none';
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.addEventListener('click', function(e) {
-        const editBtn = e.target.closest('.edit-dentist-btn');
-        if (editBtn) {
-            const id = editBtn.getAttribute('data-id');
-            const name = editBtn.getAttribute('data-name');
-            const spec = editBtn.getAttribute('data-specialization');
-            const contact = editBtn.getAttribute('data-contact');
-            const fee = editBtn.getAttribute('data-fee');
-            openEditDentistModal(id, name, spec, contact, fee);
-            return;
-        }
-
-        const deleteBtn = e.target.closest('.delete-dentist-btn');
-        if (deleteBtn) {
-            const id = deleteBtn.getAttribute('data-id');
-            const name = deleteBtn.getAttribute('data-name');
-            confirmDeleteDentist(id, name);
-            return;
-        }
-
-        if (e.target.classList.contains('custom-modal-overlay')) {
-            closeEditDentistModal();
-            closeDeleteDentistModal();
-        }
-    });
+// Close modals on clicking backdrop
+window.addEventListener('click', function(e) {
+    if (e.target.classList.contains('custom-modal-overlay')) {
+        closeEditDentistModal();
+        closeDeleteDentistModal();
+    }
 });
 </script>
 
