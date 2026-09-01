@@ -76,11 +76,11 @@
                         <tr>
                             <td style="font-weight:600; color:var(--text-muted);">#${d.id}</td>
                             <td style="font-weight:700; color:var(--primary-dark);">
-                                <i class="fa-solid fa-user-doctor" style="color:var(--primary); margin-right:6px;"></i> ${d.name}
+                                <i class="fa-solid fa-user-doctor" style="color:var(--primary); margin-right:6px;"></i> <c:out value="${d.name}" />
                             </td>
                             <td>
                                 <span class="badge badge-completed" style="background:rgba(8, 145, 178, 0.15); color:var(--primary); font-weight:600;">
-                                    ${d.specialization}
+                                    <c:out value="${d.specialization}" />
                                 </span>
                             </td>
                             <td>${d.contactNumber != null && !d.contactNumber.isEmpty() ? d.contactNumber : 'N/A'}</td>
@@ -88,15 +88,20 @@
                                 LKR <fmt:formatNumber value="${d.consultationFee}" pattern="#,##0.00"/>
                             </td>
                             <td style="text-align:center; white-space:nowrap;">
-                                <button type="button" class="btn btn-secondary" 
+                                <button type="button" class="btn btn-secondary edit-dentist-btn" 
                                         style="padding:6px 14px; font-size:0.8rem; background:var(--primary); border-color:var(--primary); color:#fff; border-radius:8px; margin-right:4px;"
-                                        onclick="openEditDentistModal(${d.id}, '${d.name}', '${d.specialization}', '${d.contactNumber}', ${d.consultationFee})">
+                                        data-id="${d.id}"
+                                        data-name="<c:out value='${d.name}'/>"
+                                        data-specialization="<c:out value='${d.specialization}'/>"
+                                        data-contact="<c:out value='${d.contactNumber}'/>"
+                                        data-fee="${d.consultationFee}">
                                     <i class="fa-solid fa-pen-to-square"></i> Edit
                                 </button>
 
-                                <button type="button" class="btn btn-secondary" 
+                                <button type="button" class="btn btn-secondary delete-dentist-btn" 
                                         style="padding:6px 14px; font-size:0.8rem; background:var(--danger); border-color:var(--danger); color:#fff; border-radius:8px;"
-                                        onclick="confirmDeleteDentist(${d.id}, '${d.name}')">
+                                        data-id="${d.id}"
+                                        data-name="<c:out value='${d.name}'/>">
                                     <i class="fa-solid fa-trash"></i> Remove
                                 </button>
                             </td>
@@ -226,12 +231,32 @@ function closeDeleteDentistModal() {
     document.getElementById('deleteDentistModal').style.display = 'none';
 }
 
-// Close modals on clicking backdrop
-window.addEventListener('click', function(e) {
-    if (e.target.classList.contains('custom-modal-overlay')) {
-        closeEditDentistModal();
-        closeDeleteDentistModal();
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        const editBtn = e.target.closest('.edit-dentist-btn');
+        if (editBtn) {
+            const id = editBtn.getAttribute('data-id');
+            const name = editBtn.getAttribute('data-name');
+            const spec = editBtn.getAttribute('data-specialization');
+            const contact = editBtn.getAttribute('data-contact');
+            const fee = editBtn.getAttribute('data-fee');
+            openEditDentistModal(id, name, spec, contact, fee);
+            return;
+        }
+
+        const deleteBtn = e.target.closest('.delete-dentist-btn');
+        if (deleteBtn) {
+            const id = deleteBtn.getAttribute('data-id');
+            const name = deleteBtn.getAttribute('data-name');
+            confirmDeleteDentist(id, name);
+            return;
+        }
+
+        if (e.target.classList.contains('custom-modal-overlay')) {
+            closeEditDentistModal();
+            closeDeleteDentistModal();
+        }
+    });
 });
 </script>
 
