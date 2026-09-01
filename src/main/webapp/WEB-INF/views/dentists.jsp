@@ -90,20 +90,13 @@
                             <td style="text-align:center; white-space:nowrap;">
                                 <button type="button" class="btn btn-secondary" 
                                         style="padding:6px 14px; font-size:0.8rem; background:var(--primary); border-color:var(--primary); color:#fff; border-radius:8px; margin-right:4px;"
-                                        data-id="${d.id}"
-                                        data-name="<c:out value='${d.name}'/>"
-                                        data-specialization="<c:out value='${d.specialization}'/>"
-                                        data-contact="<c:out value='${d.contactNumber}'/>"
-                                        data-fee="${d.consultationFee}"
-                                        onclick="openEditDentistModalFromBtn(this)">
+                                        onclick="openEditDentistModal(${d.id})">
                                     <i class="fa-solid fa-pen-to-square"></i> Edit
                                 </button>
 
                                 <button type="button" class="btn btn-secondary" 
                                         style="padding:6px 14px; font-size:0.8rem; background:var(--danger); border-color:var(--danger); color:#fff; border-radius:8px;"
-                                        data-id="${d.id}"
-                                        data-name="<c:out value='${d.name}'/>"
-                                        onclick="confirmDeleteDentistFromBtn(this)">
+                                        onclick="confirmDeleteDentist(${d.id})">
                                     <i class="fa-solid fa-trash"></i> Remove
                                 </button>
                             </td>
@@ -209,40 +202,59 @@
 </div>
 
 <script>
-function openEditDentistModalFromBtn(btn) {
-    var id = btn.getAttribute('data-id');
-    var name = btn.getAttribute('data-name');
-    var spec = btn.getAttribute('data-specialization');
-    var contact = btn.getAttribute('data-contact');
-    var fee = btn.getAttribute('data-fee');
+// Registered Dentists Data map for instant modal loading
+var dentistsData = {
+<c:forEach var="d" items="${dentists}" varStatus="status">
+    "${d.id}": {
+        id: ${d.id},
+        name: "<c:out value='${d.name}'/>",
+        specialization: "<c:out value='${d.specialization}'/>",
+        contactNumber: "<c:out value='${d.contactNumber}'/>",
+        consultationFee: ${d.consultationFee}
+    }${!status.last ? ',' : ''}
+</c:forEach>
+};
 
-    document.getElementById('editDentistId').value = id;
-    document.getElementById('editDentistName').value = name;
-    document.getElementById('editSpecialization').value = spec;
-    document.getElementById('editContactNumber').value = contact || '';
-    document.getElementById('editConsultationFee').value = fee;
+function openEditDentistModal(id) {
+    var d = dentistsData[id];
+    if (!d) return;
 
-    document.getElementById('editDentistModal').style.display = 'flex';
+    document.getElementById('editDentistId').value = d.id;
+    document.getElementById('editDentistName').value = d.name;
+    document.getElementById('editSpecialization').value = d.specialization;
+    document.getElementById('editContactNumber').value = d.contactNumber || '';
+    document.getElementById('editConsultationFee').value = d.consultationFee;
+
+    var modal = document.getElementById('editDentistModal');
+    modal.classList.add('active');
+    modal.style.display = 'flex';
 }
 
 function closeEditDentistModal() {
-    document.getElementById('editDentistModal').style.display = 'none';
+    var modal = document.getElementById('editDentistModal');
+    modal.classList.remove('active');
+    modal.style.display = 'none';
 }
 
-function confirmDeleteDentistFromBtn(btn) {
-    var id = btn.getAttribute('data-id');
-    var name = btn.getAttribute('data-name');
+function confirmDeleteDentist(id) {
+    var d = dentistsData[id];
+    if (!d) return;
 
-    document.getElementById('deleteDentistId').value = id;
-    document.getElementById('deleteDentistName').textContent = name;
-    document.getElementById('deleteDentistModal').style.display = 'flex';
+    document.getElementById('deleteDentistId').value = d.id;
+    document.getElementById('deleteDentistName').textContent = d.name;
+
+    var modal = document.getElementById('deleteDentistModal');
+    modal.classList.add('active');
+    modal.style.display = 'flex';
 }
 
 function closeDeleteDentistModal() {
-    document.getElementById('deleteDentistModal').style.display = 'none';
+    var modal = document.getElementById('deleteDentistModal');
+    modal.classList.remove('active');
+    modal.style.display = 'none';
 }
 
-// Close modals on clicking backdrop
+// Close modals on clicking backdrop overlay
 window.addEventListener('click', function(e) {
     if (e.target.classList.contains('custom-modal-overlay')) {
         closeEditDentistModal();
@@ -253,7 +265,7 @@ window.addEventListener('click', function(e) {
 
 <style>
 .custom-modal-overlay {
-    display: none;
+    display: none !important;
     position: fixed;
     top: 0;
     left: 0;
@@ -264,6 +276,10 @@ window.addEventListener('click', function(e) {
     z-index: 9999;
     justify-content: center;
     align-items: center;
+}
+
+.custom-modal-overlay.active {
+    display: flex !important;
 }
 
 .custom-modal-content {
