@@ -15,6 +15,7 @@ import java.util.List;
 
 @WebServlet("/api/treatments")
 public class TreatmentServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final TreatmentDAO treatmentDAO = new TreatmentDAO();
     private final Gson gson = new Gson();
 

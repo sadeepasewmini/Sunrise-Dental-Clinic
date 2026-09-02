@@ -18,6 +18,7 @@ import java.io.IOException;
 
 @WebServlet("/billing")
 public class BillingServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
     private final BillDAO billDAO = new BillDAO();
     private final TreatmentDAO treatmentDAO = new TreatmentDAO();

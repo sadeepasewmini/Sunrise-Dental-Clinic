@@ -18,7 +18,7 @@
     <div class="login-left">
         <img src="images/login-doctor.png" alt="Dental Clinic" class="login-hero-img">
         <div class="login-hero-title">Sunrise Dental Clinic</div>
-        <div class="login-hero-subtitle">Modern Appointment & Billing System</div>
+        <div class="login-hero-subtitle">Modern Appointment &amp; Billing System</div>
         <div class="login-hero-badges">
             <span class="hero-badge"><i class="fa-solid fa-shield-halved"></i> Secure Access</span>
             <span class="hero-badge"><i class="fa-solid fa-tooth"></i> Digital Records</span>
@@ -119,12 +119,19 @@
         </div>
     </aside>
 
+    <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="toggleMobileMenu(false)"></div>
+
     <!-- MAIN CONTENT -->
     <main class="main-content">
 
         <!-- Top Bar -->
         <div class="content-topbar">
-            <div class="page-title" id="topbar-title">Dashboard</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button type="button" id="mobileNavToggle" class="mobile-nav-toggle" onclick="toggleMobileMenu()" aria-label="Toggle Navigation">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="page-title" id="topbar-title">Dashboard</div>
+            </div>
             <div class="topbar-right">
                 <span class="topbar-badge"><i class="fa-solid fa-clock"></i> <span id="dashboard-date"></span></span>
                 <span class="topbar-badge" style="background:#e0f9f6; border-color:#99f6e4; color:#0f766e;">
@@ -331,7 +338,7 @@
                                 <th>Patient Name</th>
                                 <th>Contact</th>
                                 <th>Dentist</th>
-                                <th>Date & Time</th>
+                                <th>Date &amp; Time</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -501,9 +508,9 @@
                 </ul>
             </div>
             <div class="content-card help-card">
-                <div class="help-title"><i class="fa-solid fa-3"></i> Generating Bills & Receipts</div>
+                <div class="help-title"><i class="fa-solid fa-3"></i> Generating Bills &amp; Receipts</div>
                 <ul class="help-step-list">
-                    <li>Go to "Calculate & Bill" and enter the Appointment Number.</li>
+                    <li>Go to "Calculate &amp; Bill" and enter the Appointment Number.</li>
                     <li>Select the billing strategy: Standard, Loyalty (10% off Doctor), or Senior Citizen (15% off Treatment).</li>
                     <li>Add a manual discount if needed. Breakdown updates in real-time.</li>
                     <li>Click "Save Invoice" → then "Mark Paid" when payment is received.</li>
@@ -526,7 +533,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Password</label>
-                            <input type="password" id="user-password" class="form-input" placeholder="Enter secure password" required minlength="4">
+                            <input type="password" id="user-password" class="form-input" placeholder="Enter secure password" required pattern=".{4,}" title="Password must be at least 4 characters">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Full Name</label>

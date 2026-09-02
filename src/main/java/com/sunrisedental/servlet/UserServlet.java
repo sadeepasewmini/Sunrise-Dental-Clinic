@@ -20,6 +20,7 @@ import java.util.Map;
 
 @WebServlet(urlPatterns = {"/users", "/api/users"})
 public class UserServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final UserDAO userDAO = new UserDAO();
     private final AuditDAO auditDAO = new AuditDAO();
     private final Gson gson = new Gson();

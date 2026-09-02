@@ -13,6 +13,7 @@ import java.util.List;
 
 @WebServlet("/notifications")
 public class NotificationServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final NotificationDAO notificationDAO = new NotificationDAO();
 
     @Override

@@ -164,7 +164,7 @@
                         Apply dynamic discount strategies and generate official invoices for completed treatments.
                     </div>
                     <div class="kpi-footer" style="color: #9b59b6;">
-                        <i class="fa-solid fa-arrow-right"></i> Menu: Calculate & Bill
+                        <i class="fa-solid fa-arrow-right"></i> Menu: Calculate &amp; Bill
                     </div>
                 </div>
 

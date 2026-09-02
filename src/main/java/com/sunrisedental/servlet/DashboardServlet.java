@@ -17,6 +17,7 @@ import java.util.Map;
 
 @WebServlet("/dashboard")
 public class DashboardServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
     private final BillDAO billDAO = new BillDAO();
 

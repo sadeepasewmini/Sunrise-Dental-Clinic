@@ -16,6 +16,7 @@ import java.io.PrintWriter;
 
 @WebServlet(urlPatterns = {"/api/auth/login", "/api/auth/logout", "/api/auth/status"})
 public class AuthServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final UserDAO userDAO = new UserDAO();
     private final Gson gson = new Gson();
 

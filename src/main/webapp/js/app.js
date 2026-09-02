@@ -1,6 +1,25 @@
 // Sunrise Dental Clinic - SPA Application Script
 let currentUser = null;
 
+function toggleMobileMenu(forceState) {
+    const sidebar = document.querySelector('.sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    if (!sidebar || !backdrop) return;
+    
+    const isCurrentlyActive = sidebar.classList.contains('active');
+    const newState = (typeof forceState === 'boolean') ? forceState : !isCurrentlyActive;
+    
+    if (newState) {
+        sidebar.classList.add('active');
+        backdrop.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    } else {
+        sidebar.classList.remove('active');
+        backdrop.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
 // Global Toast Popup Notification System
 function showToast(message, type, duration) {
     if (!type) type = 'success';
@@ -194,6 +213,7 @@ const sectionTitles = {
 };
 
 function switchSection(sectionId) {
+    toggleMobileMenu(false);
     // Toggle active classes on page content
     const sections = document.querySelectorAll(".page-section");
     sections.forEach(sec => sec.classList.remove("active"));
@@ -431,7 +451,8 @@ async function handleSearchAppointment() {
             } else {
                 // Multiple results: render table list
                 tbody.innerHTML = '';
-                data.forEach(a => {
+                window.latestSearchResults = data;
+                data.forEach((a, idx) => {
                     const statusClass = a.status === "Pending" ? "badge-pending" : 
                                        (a.status === "Completed" ? "badge-completed" : "badge-cancelled");
                     const row = document.createElement("tr");
@@ -443,7 +464,7 @@ async function handleSearchAppointment() {
                         <td>${a.appointmentDate} at ${a.appointmentTime}</td>
                         <td><span class="badge ${statusClass}">${a.status}</span></td>
                         <td>
-                            <button class="btn btn-primary" style="padding:4px 10px; font-size:0.75rem; width:auto;" onclick='displaySingleAppointmentDetails(${JSON.stringify(a).replace(/'/g, "&#39;")})'>
+                            <button class="btn btn-primary" style="padding:4px 10px; font-size:0.75rem; width:auto;" onclick="viewSearchResult(${idx})">
                                 <i class="fa-solid fa-eye"></i> View
                             </button>
                         </td>
@@ -460,6 +481,12 @@ async function handleSearchAppointment() {
     } catch (e) {
         showToast("Server error while searching.", "danger");
         console.error(e);
+    }
+}
+
+function viewSearchResult(idx) {
+    if (window.latestSearchResults && window.latestSearchResults[idx]) {
+        displaySingleAppointmentDetails(window.latestSearchResults[idx]);
     }
 }
 

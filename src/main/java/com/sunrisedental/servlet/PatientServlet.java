@@ -12,6 +12,7 @@ import java.util.List;
 
 @WebServlet("/patients")
 public class PatientServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private PatientDAO patientDAO;
 
     @Override

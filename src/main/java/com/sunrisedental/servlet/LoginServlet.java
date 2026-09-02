@@ -13,6 +13,7 @@ import java.io.IOException;
 
 @WebServlet(urlPatterns = {"/login", "/logout"})
 public class LoginServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final UserDAO userDAO = new UserDAO();
 
     @Override

@@ -18,6 +18,7 @@ import java.util.List;
 
 @WebServlet(urlPatterns = {"/dentists", "/api/dentists"})
 public class DentistServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final DentistDAO dentistDAO = new DentistDAO();
     private final AuditDAO auditDAO = new AuditDAO();
     private final Gson gson = new Gson();

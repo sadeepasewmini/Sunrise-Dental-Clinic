@@ -78,12 +78,19 @@
         </div>
     </aside>
 
-    <main class="main-content">
+    <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="toggleMobileMenu(false)"></div>
+
+    <div class="main-content">
         <header class="topbar">
-            <h1 class="page-title">Sunrise Dental Clinic</h1>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button type="button" id="mobileNavToggle" class="mobile-nav-toggle" onclick="toggleMobileMenu()" aria-label="Toggle Navigation">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h1 class="page-title">Sunrise Dental Clinic</h1>
+            </div>
             <div style="display:flex; align-items:center; gap:12px;">
                 <span class="badge badge-completed">${currentUser.role}</span>
-                <span style="font-size:0.9rem; font-weight:600; color:var(--text-main);">${currentUser.username}</span>
+                <span class="user-name-label" style="font-size:0.9rem; font-weight:600; color:var(--text-main);">${currentUser.username}</span>
             </div>
         </header>
 
@@ -108,6 +115,25 @@
         </div>
 
         <script>
+            function toggleMobileMenu(forceState) {
+                const sidebar = document.querySelector('.sidebar');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (!sidebar || !backdrop) return;
+                
+                const isCurrentlyActive = sidebar.classList.contains('active');
+                const newState = (typeof forceState === 'boolean') ? forceState : !isCurrentlyActive;
+                
+                if (newState) {
+                    sidebar.classList.add('active');
+                    backdrop.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    sidebar.classList.remove('active');
+                    backdrop.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }
+
             let activeDeleteAction = null;
 
             function openDeleteConfirmModal(target, username) {

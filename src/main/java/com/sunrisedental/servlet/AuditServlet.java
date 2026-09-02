@@ -15,6 +15,7 @@ import java.util.List;
 
 @WebServlet("/api/audit-logs")
 public class AuditServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final AuditDAO auditDAO = new AuditDAO();
     private final Gson gson = new Gson();
 

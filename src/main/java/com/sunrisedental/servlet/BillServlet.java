@@ -21,6 +21,7 @@ import java.util.List;
 
 @WebServlet(urlPatterns = {"/api/bills", "/api/bills/calculate", "/api/bills/generate", "/api/bills/pay"})
 public class BillServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final BillDAO billDAO = new BillDAO();
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
     private final Gson gson = new Gson();

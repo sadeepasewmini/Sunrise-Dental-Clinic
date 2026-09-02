@@ -21,6 +21,7 @@ import java.util.Map;
     "/api/reports/treatment-popularity"
 })
 public class ReportServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
     private final BillDAO billDAO = new BillDAO();
     private final Gson gson = new Gson();

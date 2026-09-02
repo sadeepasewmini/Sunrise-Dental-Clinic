@@ -19,6 +19,7 @@ import java.util.List;
 
 @WebServlet("/appointments")
 public class AppointmentServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
     private final DentistDAO dentistDAO = new DentistDAO();
     private final TreatmentDAO treatmentDAO = new TreatmentDAO();
